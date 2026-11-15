@@ -1,0 +1,8 @@
+# Ignora la carpeta public/uploads
+public/uploads/
+
+# Ignora la carpeta App/config
+App/config
+
+# Ignora la carpeta de caché de vistas
+cache/

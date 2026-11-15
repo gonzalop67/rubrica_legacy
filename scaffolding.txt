@@ -1,0 +1,17 @@
+rubrica/
+├── App/
+│   ├── config/          # Archivos de configuración (BD, Rutas, Menú)
+│   ├── Controllers/     # Controladores de la aplicación
+│   ├── Models/          # Modelos (Capa de datos y ORM)
+│   └── views/           # Vistas y layouts (MiniBlade)
+├── Core/
+│   ├── Stubs/           # Plantillas para la generación de código CLI
+│   └── MiniBlade.php    # Motor de renderizado de plantillas
+├── database/
+│   └── migrations/      # Archivos de versionamiento de Base de Datos
+├── public/              # Directorio público (Único acceso web)
+│   ├── assets/          # CSS, JS, Imágenes
+│   ├── install/         # Asistente de instalación web
+│   └── index.php        # Archivo de entrada (Front Controller)
+├── cache/               # Archivos compilados temporales de las vistas
+└── craft                # Interfaz de línea de comandos (CLI) del framework
