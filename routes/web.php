@@ -34,13 +34,13 @@ Route::group(['middleware' => [$authMiddleware]], function () {
     Route::group(['prefix' => 'usuarios'], function () {
         Route::get('/', [UserController::class, 'index']);               // GET  /usuarios
         Route::get('create', [UserController::class, 'create']);         // GET  /usuarios/create
+        Route::get('wastebasket', [UserController::class, 'wastebasket']); // GET  /usuarios/wastebasket
         Route::post('/', [UserController::class, 'store']);              // POST /usuarios
         Route::get(':id/edit', [UserController::class, 'edit']);         // GET  /usuarios/5/edit
         Route::post(':id/update', [UserController::class, 'update']);    // POST /usuarios/5/update
         Route::post(':id/delete', [UserController::class, 'delete']);    // POST /usuarios/5/delete
-        // Si agregas papelera en el futuro:
-        // Route::get('wastebasket', [UserController::class, 'wastebasket']);
-        // Route::post(':id/restore', [UserController::class, 'restore']);
+        Route::post(':id/restore', [UserController::class, 'restore']);  // POST /usuarios/5/restore
+        Route::post(':id/destroy', [UserController::class, 'destroy']);  // POST /usuarios/5/destroy
     });
 
     // --- Módulo de Roles ---
@@ -74,7 +74,6 @@ Route::group(['middleware' => [$authMiddleware]], function () {
         Route::get('/', [MenuController::class, 'index']);
         Route::post('get_menu_ajax', [MenuController::class, 'get_menu_ajax']);
     });
-
 });
 
 // Ejecutar el despachador (si ninguna ruta coincide, pasará automáticamente a /legacy)

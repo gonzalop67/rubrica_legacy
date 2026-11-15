@@ -356,4 +356,131 @@ class UserController extends Controller
             'mensaje' => $eliminado ? 'Usuario enviado a la papelera.' : 'No se pudo eliminar el usuario.'
         ]);
     }
+
+    /**
+     * Muestra la papelera de usuarios eliminados lógicamente.
+     */
+    public function wastebasket()
+    {
+        $title = "Papelera de Usuarios";
+        $search = isset($_GET['search']) ? trim($_GET['search']) : "";
+
+        $query = $this->userModel
+            ->onlyTrashed()
+            ->select('sw_usuario.*', 'sw_persona.nombre_completo')
+            ->join('sw_persona', 'sw_usuario.persona_id', '=', 'sw_persona.id_persona');
+
+        if ($search !== "") {
+            $likeSearch = '%' . $search . '%';
+            $query->where = "sw_usuario.deleted_at IS NOT NULL AND (sw_persona.nombre_completo LIKE ? OR sw_usuario.us_login LIKE ?)";
+            $query->values = [$likeSearch, $likeSearch];
+        }
+
+        $usuarios = $query->orderBy('sw_usuario.deleted_at', 'DESC')->paginate(5);
+
+        return $this->view('admin.usuarios.wastebasket', compact('usuarios', 'title'));
+    }
+
+    /**
+     * Restaura un usuario eliminado lógicamente (Botón Verde).
+     */
+    public function restore(int $id)
+    {
+        try {
+            $restaurado = $this->userModel->restore($id);
+
+            return $this->json([
+                'ok'      => (bool)$restaurado,
+                'success' => (bool)$restaurado,
+                'mensaje' => $restaurado ? 'El usuario ha sido restaurado con éxito.' : 'No se pudo restaurar el usuario.',
+                'message' => $restaurado ? 'El usuario ha sido restaurado con éxito.' : 'No se pudo restaurar el usuario.'
+            ]);
+        } catch (\Throwable $e) {
+            return $this->json([
+                'ok'      => false,
+                'success' => false,
+                'mensaje' => 'Error: ' . $e->getMessage(),
+                'message' => 'Error: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Eliminación física definitiva de un usuario (Botón Rojo).
+     */
+    public function destroy(int $id)
+    {
+        try {
+            $usuario = $this->userModel->withTrashed()->find($id);
+
+            if (!$usuario) {
+                return $this->json([
+                    'ok'      => false,
+                    'success' => false,
+                    'titulo'  => 'Atención',
+                    'mensaje' => 'El usuario no existe en el sistema.',
+                    'estado'  => 'warning'
+                ]);
+            }
+
+            $foto = $usuario['us_foto'] ?? '';
+            $personaId = (int)($usuario['persona_id'] ?? 0);
+
+            $this->userModel->beginTransaction();
+
+            // 1. Eliminamos roles asociados y el registro de sw_usuario
+            $this->roleUserModel->sync($id, []);
+            $resultado = $this->userModel->forceDelete($id);
+
+            // 2. Opcional: intentamos eliminar también el registro de sw_persona si no tiene dependencias
+            if ($resultado && $personaId > 0) {
+                $this->personaModel->forceDelete($personaId);
+            }
+
+            $this->userModel->commit();
+
+            // 3. Limpiamos la foto del disco si no es una imagen por defecto
+            if ($resultado && !empty($foto) && !in_array($foto, ['default.png', 'no-disponible.png'], true)) {
+                $rutaFoto = dirname(__DIR__, 3) . '/public/uploads/' . $foto;
+                if (file_exists($rutaFoto)) {
+                    unlink($rutaFoto);
+                }
+            }
+
+            return $this->json([
+                'ok'      => (bool)$resultado,
+                'success' => (bool)$resultado,
+                'titulo'  => $resultado ? '¡Completado!' : 'Error',
+                'mensaje' => $resultado ? 'El usuario ha sido eliminado permanentemente del sistema.' : 'No se pudo eliminar el registro.',
+                'estado'  => $resultado ? 'success' : 'error'
+            ]);
+        } catch (\mysqli_sql_exception $e) {
+            $this->userModel->rollBack();
+            if ($e->getCode() === 1451) {
+                return $this->json([
+                    'ok'      => false,
+                    'success' => false,
+                    'titulo'  => 'No se puede eliminar',
+                    'mensaje' => 'El usuario tiene registros históricos vinculados (calificaciones, asistencias o distributivos). Debe conservarse o mantenerse en papelera.',
+                    'estado'  => 'error'
+                ]);
+            }
+            return $this->json([
+                'ok'      => false,
+                'success' => false,
+                'titulo'  => 'Error de Base de Datos',
+                'mensaje' => 'Fallo en la consulta: ' . $e->getMessage(),
+                'estado'  => 'error'
+            ]);
+        } catch (\Throwable $e) {
+            $this->userModel->rollBack();
+            return $this->json([
+                'ok'      => false,
+                'success' => false,
+                'titulo'  => 'Error inesperado',
+                'mensaje' => $e->getMessage(),
+                'estado'  => 'error'
+            ]);
+        }
+    }
 }

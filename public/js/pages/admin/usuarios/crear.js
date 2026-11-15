@@ -170,7 +170,7 @@ const validarSelect = (input, campo) => {
 // Escucha en tiempo real para inputs, textareas y selects
 const validarFormulario = (e) => {
     const nombreCampo = e.target.name || e.target.id;
-    
+
     // Si el elemento es un SELECT, usamos su validador especializado
     if (e.target.tagName === "SELECT") {
         validarSelect(e.target, nombreCampo);
@@ -220,8 +220,10 @@ document.addEventListener("change", function (e) {
 // 6. PROCESAMIENTO Y ENVÍO DE DATOS (FETCH)
 // ==========================================
 async function fntProcesar() {
-    const url = buttonSubmit.innerText.trim() === "Actualizar" ? "/usuarios/" + inputIdUsuario.value + "/update" : "/usuarios/";
-    
+    const url = (inputIdUsuario && inputIdUsuario.value !== "")
+        ? "/usuarios/" + inputIdUsuario.value + "/update"
+        : "/usuarios";
+
     // -------------------------------------------------------------------------
     // LIMPIEZA PREVIA: Resetea todos los errores anteriores antes de enviar
     // -------------------------------------------------------------------------
@@ -234,11 +236,11 @@ async function fntProcesar() {
             errorContainer.style.display = "none";
         }
     });
-    
+
     // Limpieza específica para el contenedor de roles/checkboxes
     const rolesContainer = document.getElementById("roles-container");
     const errorRoles = document.getElementById("error-roles");
-    
+
     if (rolesContainer) {
         rolesContainer.classList.remove("is-invalid", "border", "border-danger", "p-2", "rounded");
     }
@@ -362,7 +364,7 @@ formulario.addEventListener("submit", (e) => {
             text: "Por favor, revisa las casillas marcadas en rojo antes de continuar.",
             icon: "error",
         });
-        
+
         // Foco automático en el primer elemento con error de validación frontend (Usabilidad)
         const primerError = document.querySelector(".is-invalid");
         if (primerError) {
