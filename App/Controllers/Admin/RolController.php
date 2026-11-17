@@ -21,23 +21,21 @@ class RolController extends Controller
      */
     public function index()
     {
-        $title = 'Lista de Roles';
-        $search = isset($_GET['search']) ? $_GET['search'] : "";
+        $title = "Lista de Perfiles";
+        $search = isset($_GET['search']) ? trim($_GET['search']) : "";
+
+        $this->roleModel->where = "";
+        $this->roleModel->values = [];
 
         if ($search !== "") {
-            $roles = $this->roleModel
-                ->where('pe_nombre', 'LIKE', '%' . $_GET['search'] . '%')
-                ->orWhere('pe_slug', 'LIKE', '%' . $_GET['search'] . '%')
-                ->orderBy('pe_nombre')
-                ->paginate(5);
-        } else {
-            $roles = $this->roleModel
-                ->orderBy('pe_nombre')
-                ->paginate(5);
+            $likeSearch = '%' . $search . '%';
+            $this->roleModel->where = "(pe_nombre LIKE ? OR pe_slug LIKE ?)";
+            $this->roleModel->values = [$likeSearch, $likeSearch];
         }
 
-        // return $roles;
-        return $this->view('admin.roles.index', compact('roles', 'title'));
+        $roles = $this->roleModel->orderBy('pe_nombre', 'ASC')->paginate(10);
+
+        return $this->view('admin.roles.index', compact('title', 'roles'));
     }
 
     /**
@@ -45,8 +43,7 @@ class RolController extends Controller
      */
     public function create()
     {
-        $title = "Nuevo Rol";
-
+        $title = "Nuevo Perfil";
         return $this->view('admin.roles.create', compact('title'));
     }
 
@@ -71,8 +68,8 @@ class RolController extends Controller
 
         // 3. Preparación del set de datos (limpiando espacios)
         $datos = [
-            'pe_nombre' => trim($input['nombre'] ?? ''),
-            'pe_slug'   => trim($input['slug'] ?? ''),
+            'pe_nombre' => preg_replace('/\s+/', ' ', trim($input['nombre'])),
+            'pe_slug'   => trim($input['slug'])
         ];
 
         // 4. Persistencia con manejo de transacciones
@@ -107,7 +104,7 @@ class RolController extends Controller
     public function edit(int $id)
     {
         $role = $this->roleModel->find($id);
-        $title = "Editar Usuario";
+        $title = "Editar Perfil";
 
         return $this->view('admin.roles.edit', compact('title', 'role'));
     }
@@ -133,8 +130,8 @@ class RolController extends Controller
 
         // 3. Preparación del set de datos (limpiando espacios)
         $datos = [
-            'pe_nombre' => trim($input['nombre'] ?? ''),
-            'pe_slug'   => trim($input['slug'] ?? ''),
+            'pe_nombre' => preg_replace('/\s+/', ' ', trim($input['nombre'])),
+            'pe_slug'   => trim($input['slug'])
         ];
 
         // 4. Persistencia con manejo de transacciones atómicas
@@ -192,7 +189,7 @@ class RolController extends Controller
 
     public function wastebasket()
     {
-        $title = "Papelera de Usuarios";
+        $title = "Papelera de Perfiles";
         $search = isset($_GET['search']) ? $_GET['search'] : "";
 
         // 1. Iniciamos el filtro de borrados lógicos
@@ -203,7 +200,7 @@ class RolController extends Controller
             $table = $this->roleModel->getTable() ?? 'sw_perfil'; // Asegura tener un método getTable o pon el nombre de tu tabla directamente
 
             // 2. Asignamos el WHERE explícito calificando las columnas con su tabla
-            $query->where = "({$table}.pe_nombre LIKE ? OR {$table}.pe_slug LIKE ?)";
+            $query->where = "{$table}.deleted_at IS NOT NULL AND ({$table}.pe_nombre LIKE ? OR {$table}.pe_slug LIKE ?)";
 
             $query->values = [
                 '%' . $search . '%',
