@@ -59,6 +59,20 @@ class UserController extends Controller
         $usuarios = $query->orderBy('sw_persona.nombre_completo', 'ASC')
             ->paginate(7);
 
+        // 4. Obtener los roles asociados a los usuarios de esta página
+        if (!empty($usuarios['data'])) {
+            foreach ($usuarios['data'] as &$u) {
+                $sqlRoles = "SELECT p.pe_nombre 
+                     FROM sw_usuario_perfil up 
+                     INNER JOIN sw_perfil p ON up.id_perfil = p.id_perfil 
+                     WHERE up.id_usuario = ? 
+                     ORDER BY p.pe_nombre ASC";
+                $rolesData = $this->userModel->query($sqlRoles, [(int)$u['id_usuario']])->get();
+                $u['roles'] = array_column($rolesData, 'pe_nombre');
+            }
+            unset($u);
+        }
+
         return $this->view('admin.usuarios.index', compact('title', 'usuarios'));
     }
 

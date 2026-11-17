@@ -78,11 +78,15 @@
                                     <td>{{ !empty($usuario['nombre_completo']) ? $usuario['nombre_completo'] : 'Sin asignar' }}
                                     </td>
                                     <td>{{ $usuario['us_email'] }}</td>
-                                    <td class="text-center">
-                                        <a href="{{ $assetBase }}/usuarios/{{ $usuario['id_usuario'] }}/roles"
-                                            class="btn btn-xs btn-primary" title="Roles">
-                                            <i class="fa fa-users"></i>
-                                        </a>
+                                    <td>
+                                        @if (!empty($usuario['roles']))
+                                            @foreach ($usuario['roles'] as $rolNombre)
+                                                <span class="label label-info"
+                                                    style="display: inline-block; margin-bottom: 2px;">{{ $rolNombre }}</span>
+                                            @endforeach
+                                        @else
+                                            <span class="label label-default">Sin rol</span>
+                                        @endif
                                     </td>
                                     <td class="text-center">
                                         <div class="btn-group">
