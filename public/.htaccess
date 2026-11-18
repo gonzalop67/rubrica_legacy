@@ -1,7 +1,10 @@
+DirectorySlash Off
+
 <IfModule mod_rewrite.c>
-Options -Multiviews
-RewriteEngine On
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteRule ^(.+)$ index.php?url=$1 [QSA,L]
+    Options -Multiviews
+    RewriteEngine On
+
+    # Solo ignoramos archivos reales (CSS, JS, imágenes), NO directorios
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^(.+)$ index.php?url=$1 [QSA,L]
 </IfModule>

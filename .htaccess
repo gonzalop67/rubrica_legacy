@@ -1,3 +1,5 @@
+DirectorySlash Off
+
 <IfModule mod_rewrite.c>
     RewriteEngine on
     RewriteRule ^$ public/ [L]

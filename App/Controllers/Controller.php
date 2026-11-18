@@ -29,10 +29,15 @@ class Controller
         return $this->blade->render($route, $data);
     }
 
-    protected function json(mixed $data): void
+    protected function json(array $data, int $statusCode = 200): void
     {
-        header('Content-Type: application/json');
-        echo json_encode($data);
+        if (ob_get_length()) {
+            ob_clean();
+        }
+        http_response_code($statusCode);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode($data, JSON_UNESCAPED_UNICODE);
+        exit;
     }
 
     private function shareSiaeLayoutData(): void
