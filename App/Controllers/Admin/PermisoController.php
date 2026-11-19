@@ -38,7 +38,7 @@ class PermisoController extends Controller
         // El ORM inyectará de forma automática el ORDER BY y resolverá la paginación
         $permisos = $this->permissionModel
             ->orderBy('nombre')
-            ->paginate(5);
+            ->paginate(10);
 
         // return $permisos;
 

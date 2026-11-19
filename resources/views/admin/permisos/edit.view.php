@@ -1,57 +1,77 @@
 @extends('layout.app')
 
+@section('title')
+    Editar Permiso
+@endsection
+
 @section('content')
-    <div class="container">
-        <div class="row">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between">
-                        <h5><strong>Editar Permiso: {{ $permission['nombre'] }}</strong></h5>
-                        <div>
-                            <a href="{{ RUTA_URL }}/permissions" class="btn-volver">Volver al Listado de Permisos</a>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <form id="formulario" action="" method="post">
-                            <input type="text" name="id_permiso" id="id_permiso" value="{{ $permission['id_permiso'] }}" hidden>
-                            <div class="row mb-2">
-                                <label for="nombre" class="col-sm-2 col-form-label">Nombre:</label>
-                                <div class="col-sm-10">
-                                    <input type="text" class="form-control" name="nombre" id="nombre" value="{{ $permission['nombre'] }}"
-                                        placeholder="Nombre del Permiso e.g. Ver Usuarios" required autofocus>
-                                    <div id="error-nombre" class="invalid-feedback"></div>
-                                </div>
-                            </div>
+    <section class="content-header">
+        <h1>
+            Permisos
+            <small>Actualizar datos del permiso</small>
+        </h1>
+    </section>
 
-                            <div class="row mb-2">
-                                <label for="slug" class="col-sm-2 col-form-label">Slug:</label>
-                                <div class="col-sm-10">
-                                    <input type="text" class="form-control" name="slug" id="slug" value="{{ $permission['slug'] }}"
-                                        placeholder="Slug del Permiso e.g. ver-usuarios" required>
-                                    <div id="error-slug" class="invalid-feedback"></div>
-                                </div>
-                            </div>
-
-                            <div class="row mb-2">
-                                <label for="descripcion" class="col-sm-2 col-form-label">Descripción:</label>
-                                <div class="col-sm-10">
-                                    <textarea class="form-control" name="descripcion" id="descripcion" rows="2" placeholder="Descripción del Permiso e.g. Permite ver el listado de usuarios" required>{{ $permission['descripcion'] }}</textarea>
-                                    <div id="error-descripcion" class="invalid-feedback"></div>
-                                </div>
-                            </div>
-
-                            <div class="row mb-2">
-                                <div class="col-sm-2">
-                                </div>
-                                <div class="col-sm-10">
-                                    <button id="btn-submit" type="submit" class="btn btn-success"><i class="fa fa-pencil"></i> Actualizar</button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
+    <section class="content">
+        <div class="box box-primary">
+            <div class="box-header with-border">
+                <h3 class="box-title"><strong>Editar Permiso: {{ $permission['nombre'] }}</strong></h3>
+                <div class="box-tools pull-right">
+                    <a href="{{ $assetBase }}/permisos" class="btn btn-default btn-sm btn-volver">
+                        <i class="fa fa-arrow-left"></i> Volver al Listado de Permisos
+                    </a>
                 </div>
             </div>
+
+            <form id="formulario" class="form-horizontal" action="" method="post">
+                <input type="hidden" name="id_permiso" id="id_permiso" value="{{ $permission['id_permiso'] }}">
+
+                <div class="box-body">
+                    <div class="form-group">
+                        <label for="nombre" class="col-sm-2 control-label">Nombre:</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" name="nombre" id="nombre"
+                                value="{{ $permission['nombre'] }}"
+                                placeholder="Nombre del Permiso e.g. Ver Usuarios" required autofocus>
+                            <span id="error-nombre" class="help-block text-danger" style="display:none;"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="slug" class="col-sm-2 control-label">Slug:</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" name="slug" id="slug"
+                                value="{{ $permission['slug'] }}"
+                                placeholder="Slug del Permiso e.g. ver-usuarios" required>
+                            <span id="error-slug" class="help-block text-danger" style="display:none;"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="descripcion" class="col-sm-2 control-label">Descripción:</label>
+                        <div class="col-sm-10">
+                            <textarea class="form-control" name="descripcion" id="descripcion" rows="2"
+                                placeholder="Descripción del Permiso e.g. Permite ver el listado de usuarios" required>{{ $permission['descripcion'] }}</textarea>
+                            <span id="error-descripcion" class="help-block text-danger" style="display:none;"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="box-footer">
+                    <div class="row">
+                        <div class="col-sm-offset-2 col-sm-10">
+                            <button id="btn-submit" type="submit" class="btn btn-success">
+                                <i class="fa fa-save"></i> Actualizar
+                            </button>
+                            <a href="{{ $assetBase }}/permisos" class="btn btn-default">
+                                Cancelar
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </form>
         </div>
-    </div>
-    <script src="{{ RUTA_URL }}/public/assets/js/pages/admin/permisos/crear.js"></script>
+    </section>
+
+    <script src="{{ $assetBase }}/js/pages/admin/permisos/crear.js?v=2"></script>
 @endsection

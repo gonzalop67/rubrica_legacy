@@ -21,26 +21,22 @@ require_once RAIZ_PROYECTO . '/Core/middlewares.php';
 Route::post('auth/login', [LoginController::class, 'login']);
 Route::get('auth/logout', [LoginController::class, 'logout']);
 
-
 // =========================================================================
 // 2. MÓDULOS PROTEGIDOS (Todos comparten $authMiddleware automáticamente)
 // =========================================================================
-Route::group(['middleware' => [$authMiddleware]], function () {
+Route::group(['middleware' => [$authMiddleware, $permissionMiddleware]], function () {
 
-    // Dashboard moderno
-    Route::get('admin/dashboard', [AdminDashboardController::class, 'index']);
-
-    // --- Módulo de Usuarios (Migrado) ---
+    // --- Módulo de Usuarios ---
     Route::group(['prefix' => 'usuarios'], function () {
-        Route::get('/', [UserController::class, 'index']);               // GET  /usuarios
-        Route::get('create', [UserController::class, 'create']);         // GET  /usuarios/create
-        Route::get('wastebasket', [UserController::class, 'wastebasket']); // GET  /usuarios/wastebasket
-        Route::post('/', [UserController::class, 'store']);              // POST /usuarios
-        Route::get(':id/edit', [UserController::class, 'edit']);         // GET  /usuarios/5/edit
-        Route::post(':id/update', [UserController::class, 'update']);    // POST /usuarios/5/update
-        Route::post(':id/delete', [UserController::class, 'delete']);    // POST /usuarios/5/delete
-        Route::post(':id/restore', [UserController::class, 'restore']);  // POST /usuarios/5/restore
-        Route::post(':id/destroy', [UserController::class, 'destroy']);  // POST /usuarios/5/destroy
+        Route::get('/', [UserController::class, 'index']);
+        Route::get('create', [UserController::class, 'create']);
+        Route::get('wastebasket', [UserController::class, 'wastebasket']);
+        Route::post('/', [UserController::class, 'store']);
+        Route::get(':id/edit', [UserController::class, 'edit']);
+        Route::post(':id/update', [UserController::class, 'update']);
+        Route::post(':id/delete', [UserController::class, 'delete']);
+        Route::post(':id/restore', [UserController::class, 'restore']);
+        Route::post(':id/destroy', [UserController::class, 'destroy']);
     });
 
     // --- Módulo de Roles ---
@@ -54,10 +50,12 @@ Route::group(['middleware' => [$authMiddleware]], function () {
         Route::post(':id/delete', [RolController::class, 'delete']);
         Route::post(':id/restore', [RolController::class, 'restore']);
         Route::post(':id/destroy', [RolController::class, 'destroy']);
+        Route::get(':id/permisos', [RolController::class, 'permissions']);
+        Route::post(':id/permisos', [RolController::class, 'savePermissions']);
     });
 
     // --- Módulo de Permisos ---
-    Route::group(['prefix' => 'permissions'], function () {
+    Route::group(['prefix' => 'permisos'], function () {
         Route::get('/', [PermisoController::class, 'index']);
         Route::get('create', [PermisoController::class, 'create']);
         Route::post('/', [PermisoController::class, 'store']);
@@ -67,12 +65,6 @@ Route::group(['middleware' => [$authMiddleware]], function () {
         Route::post(':id/delete', [PermisoController::class, 'delete']);
         Route::post(':id/restore', [PermisoController::class, 'restore']);
         Route::post(':id/destroy', [PermisoController::class, 'destroy']);
-    });
-
-    // --- Módulo de Menús ---
-    Route::group(['prefix' => 'menus'], function () {
-        Route::get('/', [MenuController::class, 'index']);
-        Route::post('get_menu_ajax', [MenuController::class, 'get_menu_ajax']);
     });
 });
 

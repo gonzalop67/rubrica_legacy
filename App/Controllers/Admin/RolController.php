@@ -298,4 +298,98 @@ class RolController extends Controller
         }
         exit;
     }
+
+    /**
+     * Muestra el árbol de menús y submenús para asignar permisos a un perfil.
+     */
+    public function permissions(int $id)
+    {
+        $role = $this->roleModel->find($id);
+
+        if (!$role) {
+            $assetBase = rtrim(str_replace(['\\', '/public'], ['/', ''], dirname($_SERVER['SCRIPT_NAME'] ?? '')), '/');
+            header("Location: {$assetBase}/roles");
+            exit;
+        }
+
+        $title = "Permisos del Perfil: " . $role['pe_nombre'];
+
+        // 1. Obtener IDs de menús actualmente asignados a este perfil
+        $asignadosData = $this->roleModel->query(
+            "SELECT id_menu FROM sw_menu_perfil WHERE id_perfil = ?",
+            [$id],
+            'i'
+        )->get();
+        $permisosAsignados = array_map('intval', array_column($asignadosData, 'id_menu'));
+
+        // 2. Obtener todos los menús padre publicados
+        $menusPadre = $this->roleModel->query(
+            "SELECT * FROM sw_menu WHERE mnu_padre = 0 AND mnu_publicado = 1 ORDER BY mnu_orden ASC"
+        )->get();
+
+        // 3. Adjuntar los submenús publicados de cada padre
+        foreach ($menusPadre as &$menu) {
+            $menu['submenus'] = $this->roleModel->query(
+                "SELECT * FROM sw_menu WHERE mnu_padre = ? AND mnu_publicado = 1 ORDER BY mnu_orden ASC",
+                [(int)$menu['id_menu']],
+                'i'
+            )->get();
+        }
+        unset($menu);
+
+        return $this->view('admin.roles.permissions', compact('title', 'role', 'menusPadre', 'permisosAsignados'));
+    }
+
+    /**
+     * Sincroniza los permisos seleccionados en sw_menu_perfil dentro de una transacción.
+     */
+    public function savePermissions(int $id)
+    {
+        try {
+            $role = $this->roleModel->find($id);
+            if (!$role) {
+                return $this->json([
+                    'ok' => false,
+                    'mensaje' => 'El perfil seleccionado no existe.'
+                ]);
+            }
+
+            // Recibimos el arreglo de checkboxes marcados (puede venir vacío si desmarcó todos)
+            $menusSeleccionados = $_POST['menus'] ?? [];
+            $menusIds = array_unique(array_map('intval', (array)$menusSeleccionados));
+
+            $this->roleModel->beginTransaction();
+
+            // 1. Eliminamos los permisos anteriores del perfil
+            $this->roleModel->query(
+                "DELETE FROM sw_menu_perfil WHERE id_perfil = ?",
+                [$id],
+                'i'
+            );
+
+            // 2. Insertamos los nuevos permisos marcados
+            foreach ($menusIds as $idMenu) {
+                if ($idMenu > 0) {
+                    $this->roleModel->query(
+                        "INSERT INTO sw_menu_perfil (id_perfil, id_menu) VALUES (?, ?)",
+                        [$id, $idMenu],
+                        'ii'
+                    );
+                }
+            }
+
+            $this->roleModel->commit();
+
+            return $this->json([
+                'ok' => true,
+                'mensaje' => 'Permisos actualizados correctamente para el perfil ' . $role['pe_nombre'] . '.'
+            ]);
+        } catch (\Throwable $e) {
+            $this->roleModel->rollBack();
+            return $this->json([
+                'ok' => false,
+                'mensaje' => 'Error al guardar los permisos: ' . $e->getMessage()
+            ]);
+        }
+    }
 }

@@ -1,69 +1,76 @@
 @extends('layout.app')
 
+@section('title')
+    Papelera de Permisos
+@endsection
+
 @section('content')
-    <div class="row">
-        <div class="col-md-12">
-            <!-- Page Heading -->
-            <h1 class="h3 mb-4 text-gray-800">Permisos Eliminados (Papelera)</h1>
+    <section class="content-header">
+        <h1>
+            Papelera de Permisos
+            <small>Registros eliminados temporalmente</small>
+        </h1>
+    </section>
 
-            <?php
-            $search = isset($_GET['search']) ? $_GET['search'] : '';
-            ?>
-
-            <nav class="navbar navbar-expand navbar-light bg-light mb-4">
-                <div class="container-fluid d-flex justify-content-between align-items-center w-100">
-
-                    <!-- Contenedor para los botones (Modificado: Botón para volver a la lista principal) -->
-                    <div class="d-flex align-items-center">
-                        <a href="<?= RUTA_URL ?>/permissions" class="btn btn-secondary btn-sm"><i class="fa-solid fa-arrow-left"></i>
-                            Volver a Permisos</a>
+    <section class="content">
+        <div class="box box-danger">
+            <div class="box-header with-border">
+                <div class="row">
+                    <div class="col-sm-6">
+                        <a href="{{ $assetBase }}/permisos" class="btn btn-default btn-sm">
+                            <i class="fa fa-arrow-left"></i> Volver a Permisos
+                        </a>
                     </div>
-
-                    <!-- Formulario de búsqueda (Modificado: Apunta a la ruta de la papelera) -->
-                    <form action="<?= RUTA_URL ?>/permissions/wastebasket" class="form-inline" permiso="search">
-                        <input class="form-control form-control-sm mr-2" type="search" name="search"
-                            value="{{ $search }}" placeholder="Buscar en papelera..." aria-label="Search">
-                        <button class="btn btn-outline-primary btn-sm" type="submit">Buscar</button>
-                    </form>
-
+                    <div class="col-sm-6">
+                        <form action="{{ $assetBase }}/permisos/wastebasket" method="GET" role="search" class="pull-right" style="margin: 0;">
+                            <div class="input-group input-group-sm" style="width: 250px;">
+                                <input type="text" name="search" class="form-control"
+                                    value="{{ $_GET['search'] ?? '' }}" placeholder="Buscar en papelera...">
+                                <span class="input-group-btn">
+                                    <button type="submit" class="btn btn-default"><i class="fa fa-search"></i></button>
+                                </span>
+                            </div>
+                        </form>
+                    </div>
                 </div>
-            </nav>
+            </div>
 
-            @if (count($permisos) > 0)
-                <div class="table-responsive-sm">
-                    <table class="table table-bordered">
+            <div class="box-body table-responsive">
+                @if (!empty($permisos['data']) && count($permisos['data']) > 0)
+                    <table class="table table-bordered table-striped table-hover">
                         <thead>
                             <tr>
-                                <th>#</th>
-                                <th>Nombre del Permiso</th>
-                                <th class="text-center">Acciones</th>
+                                <th style="width: 50px; vertical-align: middle;">#</th>
+                                <th style="vertical-align: middle;">Nombre del Permiso</th>
+                                <th style="vertical-align: middle;">Slug</th>
+                                <th style="vertical-align: middle;">Eliminado el</th>
+                                <th class="text-center" style="width: 110px; vertical-align: middle;">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             @php
-                                $contador = $permisos['from'] - 1;
+                                $contador = ($permisos['from'] ?? 1) - 1;
                             @endphp
                             @foreach ($permisos['data'] as $permiso)
                                 @php
                                     $contador++;
                                 @endphp
                                 <tr>
-                                    <td>{{ $contador }}</td>
-                                    <td>{{ $permiso['nombre'] }}</td>
-                                    <!-- Acciones de la Papelera: Restaurar y Eliminar Definitivamente -->
-                                    <td class="text-center">
-                                        <div class="btn-group" permiso="group" aria-label="Acciones Papelera">
-                                            <!-- Botón Restaurar -->
-                                            <button type="button" class="btn btn-success btn-sm"
+                                    <td style="vertical-align: middle;">{{ $contador }}</td>
+                                    <td style="vertical-align: middle;">{{ $permiso['nombre'] }}</td>
+                                    <td style="vertical-align: middle;"><code>{{ $permiso['slug'] }}</code></td>
+                                    <td style="vertical-align: middle;">{{ $permiso['deleted_at'] ?? '' }}</td>
+                                    <td class="text-center" style="vertical-align: middle;">
+                                        <div class="btn-group">
+                                            <button type="button" class="btn btn-success btn-xs"
                                                 onclick="confirmarRestauracion({{ $permiso['id_permiso'] }})"
                                                 title="Restaurar Permiso">
-                                                <i class="fa-solid fa-rotate-left"></i>
+                                                <i class="fa fa-undo"></i>
                                             </button>
-                                            <!-- Botón Eliminar Permanentemente -->
-                                            <button type="button" class="btn btn-danger btn-sm"
+                                            <button type="button" class="btn btn-danger btn-xs"
                                                 onclick="confirmarEliminacionDefinitiva({{ $permiso['id_permiso'] }})"
                                                 title="Eliminar Permanentemente">
-                                                <i class="fa-solid fa-trash-can"></i>
+                                                <i class="fa fa-trash"></i>
                                             </button>
                                         </div>
                                     </td>
@@ -71,55 +78,57 @@
                             @endforeach
                         </tbody>
                     </table>
-                </div>
-                @include('includes.pagination')
-            @else
-                <div class="text-center">
-                    La papelera está vacía.
-                </div>
-            @endif
+
+                    @include('includes.pagination')
+                @else
+                    <div class="alert alert-info text-center" style="margin-bottom: 0;">
+                        La papelera está vacía.
+                    </div>
+                @endif
+            </div>
         </div>
-    </div>
-    <!-- Scripts de Confirmación con SweetAlert2 -->
+    </section>
+
     <script>
-        // 1. Función para Restaurar el Permiso
         function confirmarRestauracion(idPermiso) {
             Swal.fire({
                 title: '¿Restaurar permiso?',
                 text: "El permiso volverá a estar activo en la lista principal.",
                 icon: 'question',
                 showCancelButton: true,
-                confirmButtonColor: '#28a745',
-                cancelButtonColor: '#3085d6',
+                confirmButtonColor: '#00a65a',
+                cancelButtonColor: '#d33',
                 confirmButtonText: 'Sí, restaurar',
                 cancelButtonText: 'Cancelar'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    fetch(`${base_url}/permissions/${idPermiso}/restore`, {
-                            method: 'POST',
-                            headers: {
-                                'X-Requested-With': 'XMLHttpRequest'
-                            }
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                Swal.fire('¡Restaurado!', 'El permiso ha sido activado.', 'success')
-                                    .then(() => location.reload());
-                            } else {
-                                Swal.fire('Error', 'No se pudo restaurar el permiso.', 'error');
-                            }
-                        });
+                    fetch(`${base_url}/permisos/${idPermiso}/restore`, {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success || data.ok) {
+                            Swal.fire('¡Restaurado!', data.message || data.mensaje || 'El permiso ha sido activado.', 'success')
+                                .then(() => location.reload());
+                        } else {
+                            Swal.fire('Error', data.message || data.mensaje || 'No se pudo restaurar el permiso.', 'error');
+                        }
+                    })
+                    .catch(() => {
+                        Swal.fire('Error', 'No se pudo comunicar con el servidor.', 'error');
+                    });
                 }
             });
         }
 
-        // 2. Función para Eliminar Permanentemente de la Base de Datos
         function confirmarEliminacionDefinitiva(idPermiso) {
             Swal.fire({
                 title: '¿Eliminar permanentemente?',
                 text: "Esta acción no se puede deshacer de ninguna manera.",
-                icon: 'warning', // 'danger' no es un icono válido en SweetAlert2, se usa 'warning' o 'error'
+                icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#d33',
                 cancelButtonColor: '#3085d6',
@@ -127,29 +136,28 @@
                 cancelButtonText: 'Cancelar'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    fetch(`${base_url}/permissions/${idPermiso}/destroy`, {
-                            method: 'POST',
-                            headers: {
-                                'X-Requested-With': 'XMLHttpRequest'
-                            }
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                Swal.fire('¡Eliminado!', 'El perfil ha sido borrado para siempre.', 'success')
-                                    .then(() => location.reload());
-                            } else {
-                                // Muestra el mensaje específico enviado desde el controlador (Restricción de integridad)
-                                Swal.fire({
-                                    title: 'No se puede eliminar',
-                                    text: data.mensaje,
-                                    icon: 'error'
-                                });
-                            }
-                        })
-                        .catch(error => {
-                            Swal.fire('Error', 'Ocurrió un fallo en la comunicación con el servidor.', 'error');
-                        });
+                    fetch(`${base_url}/permisos/${idPermiso}/destroy`, {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success || data.ok) {
+                            Swal.fire('¡Eliminado!', data.message || data.mensaje || 'El permiso ha sido borrado para siempre.', 'success')
+                                .then(() => location.reload());
+                        } else {
+                            Swal.fire({
+                                title: 'No se puede eliminar',
+                                text: data.mensaje || data.message,
+                                icon: 'error'
+                            });
+                        }
+                    })
+                    .catch(() => {
+                        Swal.fire('Error', 'Ocurrió un fallo en la comunicación con el servidor.', 'error');
+                    });
                 }
             });
         }

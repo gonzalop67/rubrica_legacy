@@ -1,72 +1,78 @@
 @extends('layout.app')
 
+@section('title')
+    Lista de Permisos
+@endsection
+
 @section('content')
-    <div class="row">
-        <div class="col-md-12">
-            <!-- Page Heading -->
-            <h1 class="h3 mb-4 text-gray-800">Lista de Permisos</h1>
+    <section class="content-header">
+        <h1>
+            Permisos
+            <small>Administración de permisos del sistema</small>
+        </h1>
+    </section>
 
-            <?php
-            $search = isset($_GET['search']) ? $_GET['search'] : '';
-            ?>
-
-            <nav class="navbar navbar-expand navbar-light bg-light mb-4">
-                <div class="container-fluid d-flex justify-content-between align-items-center w-100">
-
-                    <!-- Contenedor para los botones (Alineados a la izquierda) -->
-                    <div class="d-flex align-items-center">
-
-                        <!-- Se cambió me-3 por mr-3 (Bootstrap 4) y se quitó el mb-3 para alinearlos bien -->
-                        <a href="<?= RUTA_URL ?>/permissions/create" class="btn btn-primary btn-sm mr-1"><i class="fa-solid fa-user-gear"></i> Nuevo Permiso</a>
-                        <a href="<?= RUTA_URL ?>/permissions/wastebasket" class="btn btn-danger btn-sm"><i
-                            class="fa-solid fa-trash"></i> Papelera</a>
+    <section class="content">
+        <div class="box box-primary">
+            <div class="box-header with-border">
+                <div class="row">
+                    <div class="col-sm-6">
+                        <a href="{{ $assetBase }}/permisos/create" class="btn btn-primary btn-sm">
+                            <i class="fa fa-key"></i> Nuevo Permiso
+                        </a>
+                        <a href="{{ $assetBase }}/permisos/wastebasket" class="btn btn-danger btn-sm">
+                            <i class="fa fa-trash"></i> Papelera
+                        </a>
                     </div>
-
-                    <!-- Formulario de búsqueda (Alineado a la derecha) -->
-                    <form action="<?= RUTA_URL ?>/permissions" class="form-inline" role="search">
-                        <!-- Se cambió me-2 por mr-2 (Bootstrap 4) -->
-                        <input class="form-control form-control-sm mr-2" type="search" name="search"
-                            value="{{ $search }}" placeholder="Permiso a buscar..." aria-label="Search">
-                        <button class="btn btn-outline-primary btn-sm" type="submit">Buscar</button>
-                    </form>
-
+                    <div class="col-sm-6">
+                        <form action="{{ $assetBase }}/permisos" method="GET" role="search" class="pull-right" style="margin: 0;">
+                            <div class="input-group input-group-sm" style="width: 250px;">
+                                <input type="text" name="search" class="form-control"
+                                    value="{{ $_GET['search'] ?? '' }}" placeholder="Permiso a buscar...">
+                                <span class="input-group-btn">
+                                    <button type="submit" class="btn btn-default"><i class="fa fa-search"></i></button>
+                                </span>
+                            </div>
+                        </form>
+                    </div>
                 </div>
-            </nav>
+            </div>
 
-            @if (count($permisos) > 0)
-                <div class="table-responsive-sm">
-                    <table class="table table-bordered">
+            <div class="box-body table-responsive">
+                @if (!empty($permisos['data']) && count($permisos['data']) > 0)
+                    <table class="table table-bordered table-striped table-hover">
                         <thead>
                             <tr>
-                                <th>#</th>
-                                <th>Nombre</th>
-                                <th>Slug</th>
-                                <th>Descripción</th>
-                                <th class="text-center">Acciones</th>
+                                <th style="width: 50px; vertical-align: middle;">#</th>
+                                <th style="vertical-align: middle;">Nombre</th>
+                                <th style="vertical-align: middle;">Slug</th>
+                                <th style="vertical-align: middle;">Descripción</th>
+                                <th class="text-center" style="width: 110px; vertical-align: middle;">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             @php
-                                $contador = $permisos['from'] - 1;
+                                $contador = ($permisos['from'] ?? 1) - 1;
                             @endphp
                             @foreach ($permisos['data'] as $permiso)
                                 @php
                                     $contador++;
                                 @endphp
                                 <tr>
-                                    <td>{{ $contador }}</td>
-                                    <td>{{ $permiso['nombre'] }}</td>
-                                    <td>{{ $permiso['slug'] }}</td>
-                                    <td>{{ $permiso['descripcion'] }}</td>
-                                    <td class="text-center">
-                                        <div class="btn-group" role="group" aria-label="Basic example">
-                                            <a href="{{ RUTA_URL }}/permissions/{{ $permiso['id_permiso'] }}/edit"
-                                                type="button" class="btn btn-success btn-sm" title="Editar Permiso"><i
-                                                    class="fa-solid fa-pencil"></i></a>
-                                            <button type="button" class="btn btn-danger btn-sm"
+                                    <td style="vertical-align: middle;">{{ $contador }}</td>
+                                    <td style="vertical-align: middle;">{{ $permiso['nombre'] }}</td>
+                                    <td style="vertical-align: middle;"><code>{{ $permiso['slug'] }}</code></td>
+                                    <td style="vertical-align: middle;">{{ $permiso['descripcion'] }}</td>
+                                    <td class="text-center" style="vertical-align: middle;">
+                                        <div class="btn-group">
+                                            <a href="{{ $assetBase }}/permisos/{{ $permiso['id_permiso'] }}/edit"
+                                                class="btn btn-warning btn-xs" title="Editar Permiso">
+                                                <i class="fa fa-pencil"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-danger btn-xs"
                                                 onclick="confirmarEliminacion({{ $permiso['id_permiso'] }})"
                                                 title="Eliminar Permiso">
-                                                <i class="fa-solid fa-trash"></i>
+                                                <i class="fa fa-trash"></i>
                                             </button>
                                         </div>
                                     </td>
@@ -74,18 +80,19 @@
                             @endforeach
                         </tbody>
                     </table>
-                </div>
-                @include('includes.pagination')
-            @else
-                <div class="text-center">
-                    Aún no se han registrado Permisos.
-                </div>
-            @endif
+
+                    @include('includes.pagination')
+                @else
+                    <div class="alert alert-info text-center" style="margin-bottom: 0;">
+                        Aún no se han registrado Permisos.
+                    </div>
+                @endif
+            </div>
         </div>
-    </div>
+    </section>
+
     <script>
         function confirmarEliminacion(idPermiso) {
-            // 1. Mostrar alerta de confirmación previa al borrado
             Swal.fire({
                 title: '¿Estás seguro?',
                 text: "El permiso será enviado a la papelera.",
@@ -96,36 +103,30 @@
                 confirmButtonText: 'Sí, eliminar',
                 cancelButtonText: 'Cancelar'
             }).then((result) => {
-                // 2. Si el usuario confirma, enviamos la petición vía Fetch (AJAX)
                 if (result.isConfirmed) {
-                    // Reemplaza esta URL por la ruta real que apunte a tu método destroy
-                    fetch(`${base_url}/permissions/${idPermiso}/delete`, {
-                            method: 'POST', // O 'DELETE' según manejes tus rutas en PHP puro
-                            headers: {
-                                'X-Requested-With': 'XMLHttpRequest'
-                            }
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                // 3. Alerta de éxito total
-                                Swal.fire(
-                                    '¡Eliminado!',
-                                    data.message,
-                                    'success'
-                                ).then(() => {
-                                    // Recargamos la página o removemos la fila de la tabla dinámicamente
-                                    location.reload();
-                                });
-                            } else {
-                                // Alerta en caso de error lógico
-                                Swal.fire('Error', data.message, 'error');
-                            }
-                        })
-                        .catch(error => {
-                            // Alerta en caso de error de red
-                            Swal.fire('Error', 'No se pudo comunicar con el servidor.', 'error');
-                        });
+                    fetch(`${base_url}/permisos/${idPermiso}/delete`, {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success || data.ok) {
+                            Swal.fire(
+                                '¡Eliminado!',
+                                data.message || data.mensaje,
+                                'success'
+                            ).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire('Error', data.message || data.mensaje, 'error');
+                        }
+                    })
+                    .catch(() => {
+                        Swal.fire('Error', 'No se pudo comunicar con el servidor.', 'error');
+                    });
                 }
             });
         }

@@ -15,20 +15,24 @@
     <section class="content">
         <div class="box box-danger">
             <div class="box-header with-border">
-                <a href="{{ $assetBase }}/roles" class="btn btn-default btn-sm">
-                    <i class="fa fa-arrow-left"></i> Volver a Perfiles
-                </a>
-
-                <div class="box-tools pull-right">
-                    <form action="{{ $assetBase }}/roles/wastebasket" method="GET" role="search">
-                        <div class="input-group input-group-sm" style="width: 250px;">
-                            <input type="text" name="search" class="form-control pull-right"
-                                value="{{ $_GET['search'] ?? '' }}" placeholder="Buscar en papelera...">
-                            <div class="input-group-btn">
-                                <button type="submit" class="btn btn-default"><i class="fa fa-search"></i></button>
+                <div class="row">
+                    <div class="col-sm-6">
+                        <a href="{{ $assetBase }}/roles" class="btn btn-default btn-sm">
+                            <i class="fa fa-arrow-left"></i> Volver al Listado de Roles
+                        </a>
+                    </div>
+                    <div class="col-sm-6">
+                        <form action="{{ $assetBase }}/roles/wastebasket" method="GET" role="search"
+                            class="pull-right" style="margin: 0;">
+                            <div class="input-group input-group-sm" style="width: 250px;">
+                                <input type="text" name="search" class="form-control"
+                                    value="{{ $_GET['search'] ?? '' }}" placeholder="Buscar en papelera...">
+                                <span class="input-group-btn">
+                                    <button type="submit" class="btn btn-default"><i class="fa fa-search"></i></button>
+                                </span>
                             </div>
-                        </div>
-                    </form>
+                        </form>
+                    </div>
                 </div>
             </div>
 
@@ -100,23 +104,25 @@
             }).then((result) => {
                 if (result.isConfirmed) {
                     fetch(`${base_url}/roles/${idPerfil}/restore`, {
-                        method: 'POST',
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success || data.ok) {
-                            Swal.fire('¡Restaurado!', data.message || data.mensaje || 'El perfil ha sido activado.', 'success')
-                                .then(() => location.reload());
-                        } else {
-                            Swal.fire('Error', data.message || data.mensaje || 'No se pudo restaurar el perfil.', 'error');
-                        }
-                    })
-                    .catch(() => {
-                        Swal.fire('Error', 'Ocurrió un fallo en la comunicación con el servidor.', 'error');
-                    });
+                            method: 'POST',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success || data.ok) {
+                                Swal.fire('¡Restaurado!', data.message || data.mensaje ||
+                                        'El perfil ha sido activado.', 'success')
+                                    .then(() => location.reload());
+                            } else {
+                                Swal.fire('Error', data.message || data.mensaje ||
+                                    'No se pudo restaurar el perfil.', 'error');
+                            }
+                        })
+                        .catch(() => {
+                            Swal.fire('Error', 'Ocurrió un fallo en la comunicación con el servidor.', 'error');
+                        });
                 }
             });
         }
@@ -134,27 +140,28 @@
             }).then((result) => {
                 if (result.isConfirmed) {
                     fetch(`${base_url}/roles/${idPerfil}/destroy`, {
-                        method: 'POST',
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success || data.ok) {
-                            Swal.fire('¡Eliminado!', data.mensaje || data.message || 'El perfil ha sido borrado para siempre.', 'success')
-                                .then(() => location.reload());
-                        } else {
-                            Swal.fire({
-                                title: data.titulo || 'No se puede eliminar',
-                                text: data.mensaje || data.message,
-                                icon: 'error'
-                            });
-                        }
-                    })
-                    .catch(() => {
-                        Swal.fire('Error', 'Ocurrió un fallo en la comunicación con el servidor.', 'error');
-                    });
+                            method: 'POST',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success || data.ok) {
+                                Swal.fire('¡Eliminado!', data.mensaje || data.message ||
+                                        'El perfil ha sido borrado para siempre.', 'success')
+                                    .then(() => location.reload());
+                            } else {
+                                Swal.fire({
+                                    title: data.titulo || 'No se puede eliminar',
+                                    text: data.mensaje || data.message,
+                                    icon: 'error'
+                                });
+                            }
+                        })
+                        .catch(() => {
+                            Swal.fire('Error', 'Ocurrió un fallo en la comunicación con el servidor.', 'error');
+                        });
                 }
             });
         }
