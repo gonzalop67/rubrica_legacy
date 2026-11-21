@@ -12,11 +12,11 @@
             <div class="box-body" style="padding: 10px;">
                 <div id="barra_principal" class="well well-sm clearfix" style="background-color: #f9f9f9; border-radius: 3px; margin-bottom: 0; padding: 15px; height: auto !important;">
 
-                    <!-- 1. Fila Superior: Texto Informativo Largo (Ocupa todo el ancho libre) -->
+                    <!-- 1. Fila Superior: Texto Informativo -->
                     <div class="row" style="margin-bottom: 10px;">
                         <div class="col-xs-12">
                             <label for="cboParalelos" class="control-label" style="font-size: 13px; font-weight: bold; margin-bottom: 0; color: #333; display: block; white-space: normal;">
-                                <i class="fa fa-users text-blue"></i> Seleccione el Paralelo para abrir la Sábana de Calificaciones:
+                                <i class="fa fa-users text-blue"></i> Seleccione el Paralelo y la Asignatura para abrir la Sábana de Calificaciones:
                             </label>
                         </div>
                     </div>
@@ -24,10 +24,10 @@
                     <!-- 2. Fila Inferior: Controles alineados (Select a la izquierda, Botones a la derecha) -->
                     <div class="row" style="display: flex; align-items: center; flex-wrap: wrap;">
 
-                        <!-- Selector Desplegable -->
+                        <!-- Selector Desplegable Unificado -->
                         <div class="col-md-7 col-sm-6 col-xs-12" style="margin-bottom: 5px;">
                             <select id="cboParalelos" class="form-control" style="width: 100% !important; height: 34px;">
-                                <!-- Carga dinámica de paralelos -->
+                                <!-- Carga dinámica de paralelos y asignaturas agrupadas -->
                             </select>
                         </div>
 
@@ -48,39 +48,13 @@
                     <input id="id_estudiante" type="hidden" />
                     <input id="id_rubrica_personalizada" type="hidden" />
                     <input id="numero_pagina" type="hidden" />
+                    <input id="id_paralelo" type="hidden" />
                     <input id="id_asignatura" type="hidden" />
                 </div>
             </div>
         </div>
 
-        <!-- 🎯 NUEVA ARQUITECTURA HORIZONTAL EN CASCADA (MÁXIMO ANCHO PARA SÁBANA) -->
-
-        <!-- ⬅️ SECCIÓN SUPERIOR: Panel de Asignaturas (Formato Horizontal) -->
-        <div class="row" style="margin-top: 15px;">
-            <div class="col-xs-12">
-                <div class="box box-solid box-default" style="margin-bottom: 15px;">
-                    <div class="box-header with-border" style="background-color: #f4f4f4; padding: 8px 15px;">
-                        <h3 class="box-title" style="font-size: 13px; font-weight: bold; color: #444;">
-                            <i class="fa fa-book text-blue"></i> Asignaturas Asociadas al Paralelo
-                            <small id="num_asignaturas" style="font-size: 11px; margin-left: 10px; color: #777;">(Número de Asignaturas: 0)</small>
-                        </h3>
-                    </div>
-
-                    <div class="box-body" style="padding: 10px;">
-                        <!-- Contenedor flexible para mostrar materias como botones/tarjetas horizontales -->
-                        <div id="contenedor_asignaturas_docente" class="clearfix" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-                            <div class="text-muted text-center" style="width: 100%; padding: 15px 0; color: #999; font-size: 13px;">
-                                <i class="fa fa-arrow-up" style="margin-right: 5px; color: #ccc;"></i>
-                                Seleccione un paralelo arriba para desplegar las materias...
-                            </div>
-                        </div>
-                        <div id="pag_asignaturas" class="text-center" style="margin-top: 5px;"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ➡️ SECCIÓN INFERIOR: Sábana de Calificaciones (Ocupa el 100% del Ancho Libre) -->
+        <!-- ➡️ SECCIÓN PRINCIPAL: Sábana de Calificaciones (Ocupa el 100% del Ancho Libre) -->
         <div class="row">
             <div class="col-xs-12">
                 <div class="box box-solid box-success" id="pag_nomina_estudiantes" style="margin-bottom: 15px;">
@@ -109,7 +83,7 @@
                                 <div id="lista_estudiantes_paralelo" style="width: 100%; min-width: 100%;">
                                     <div class="text-muted text-center" style="padding: 60px 20px; color: #999;">
                                         <i class="fa fa-hand-o-up fa-2x" style="margin-bottom: 10px; color: #ccc;"></i>
-                                        <p style="margin: 0; font-size: 13px;">Seleccione una asignatura del panel superior para cargar la nómina de alumnos...</p>
+                                        <p style="margin: 0; font-size: 13px;">Seleccione un paralelo y una asignatura en el menú superior para cargar la nómina de alumnos...</p>
                                     </div>
                                 </div>
                             </div>
@@ -123,5 +97,4 @@
 </div>
 
 <link rel="stylesheet" href="calificaciones/sabana_calificaciones_estilos.css">
-
-<script src="calificaciones/index.js"></script>
+<script src="calificaciones/index_unificado.js"></script>

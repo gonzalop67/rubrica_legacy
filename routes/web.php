@@ -4,6 +4,7 @@ use App\Controllers\Admin\AdminDashboardController;
 use App\Controllers\Admin\MenuController;
 use App\Controllers\Admin\PermisoController;
 use App\Controllers\Admin\RolController;
+use App\Controllers\Admin\TareaController;
 use App\Controllers\Admin\UserController;
 use App\Controllers\LoginController;
 use Core\Route;
@@ -26,17 +27,17 @@ Route::get('auth/logout', [LoginController::class, 'logout']);
 // =========================================================================
 Route::group(['middleware' => [$authMiddleware, $permissionMiddleware]], function () {
 
-    // --- Módulo de Usuarios ---
-    Route::group(['prefix' => 'usuarios'], function () {
-        Route::get('/', [UserController::class, 'index']);
-        Route::get('create', [UserController::class, 'create']);
-        Route::get('wastebasket', [UserController::class, 'wastebasket']);
-        Route::post('/', [UserController::class, 'store']);
-        Route::get(':id/edit', [UserController::class, 'edit']);
-        Route::post(':id/update', [UserController::class, 'update']);
-        Route::post(':id/delete', [UserController::class, 'delete']);
-        Route::post(':id/restore', [UserController::class, 'restore']);
-        Route::post(':id/destroy', [UserController::class, 'destroy']);
+    // --- Módulo de Permisos ---
+    Route::group(['prefix' => 'permisos'], function () {
+        Route::get('/', [PermisoController::class, 'index']);
+        Route::get('create', [PermisoController::class, 'create']);
+        Route::post('/', [PermisoController::class, 'store']);
+        Route::get('wastebasket', [PermisoController::class, 'wastebasket']);
+        Route::get(':id/edit', [PermisoController::class, 'edit']);
+        Route::post(':id/update', [PermisoController::class, 'update']);
+        Route::post(':id/delete', [PermisoController::class, 'delete']);
+        Route::post(':id/restore', [PermisoController::class, 'restore']);
+        Route::post(':id/destroy', [PermisoController::class, 'destroy']);
     });
 
     // --- Módulo de Roles ---
@@ -54,17 +55,22 @@ Route::group(['middleware' => [$authMiddleware, $permissionMiddleware]], functio
         Route::post(':id/permisos', [RolController::class, 'savePermissions']);
     });
 
-    // --- Módulo de Permisos ---
-    Route::group(['prefix' => 'permisos'], function () {
-        Route::get('/', [PermisoController::class, 'index']);
-        Route::get('create', [PermisoController::class, 'create']);
-        Route::post('/', [PermisoController::class, 'store']);
-        Route::get('wastebasket', [PermisoController::class, 'wastebasket']);
-        Route::get(':id/edit', [PermisoController::class, 'edit']);
-        Route::post(':id/update', [PermisoController::class, 'update']);
-        Route::post(':id/delete', [PermisoController::class, 'delete']);
-        Route::post(':id/restore', [PermisoController::class, 'restore']);
-        Route::post(':id/destroy', [PermisoController::class, 'destroy']);
+    // --- Módulo de Tareas (Por Hacer) ---
+    Route::group(['prefix' => 'tareas'], function () {
+        Route::get('/', [TareaController::class, 'index']);
+    });
+
+    // --- Módulo de Usuarios ---
+    Route::group(['prefix' => 'usuarios'], function () {
+        Route::get('/', [UserController::class, 'index']);
+        Route::get('create', [UserController::class, 'create']);
+        Route::get('wastebasket', [UserController::class, 'wastebasket']);
+        Route::post('/', [UserController::class, 'store']);
+        Route::get(':id/edit', [UserController::class, 'edit']);
+        Route::post(':id/update', [UserController::class, 'update']);
+        Route::post(':id/delete', [UserController::class, 'delete']);
+        Route::post(':id/restore', [UserController::class, 'restore']);
+        Route::post(':id/destroy', [UserController::class, 'destroy']);
     });
 });
 

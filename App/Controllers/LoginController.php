@@ -43,6 +43,7 @@ class LoginController extends Controller
         $us_login = $_POST['usuario'];
         $us_password = $_POST['clave'];
         $id_perfil = $_POST['perfil'];
+        $id_periodo_lectivo = $_POST['cboPeriodo'];
 
         // Verify data login
         $clave = Encrypter::encrypt($us_password);
@@ -66,6 +67,7 @@ class LoginController extends Controller
                 if (session_status() === PHP_SESSION_NONE) session_start();
 
                 $_SESSION['authenticated'] = true;
+                $_SESSION['id_periodo_lectivo'] = $id_periodo_lectivo;
 
                 // Obtener los datos de la unidad educativa...
                 $institucion = $this->institucionModel->find(1);

@@ -3,36 +3,25 @@ $(document).ready(function () {
     // Verificar si la institución permite copiar y pegar
     verificarConfiguracionCopiarPegar();
 
-    // Cargar los paralelos al iniciar la página
-    //cargarParalelosDocente();
+    // Cargar paralelos y sus asignaturas agrupadas en el combo
     cargarParalelosYAsignaturasDocente();
 
-    // EVENTO REFACTORIZADO Y ASEGURADO: Al cambiar el paralelo
+    // EVENTO UNIFICADO: Al cambiar la asignatura/paralelo en el select
     $("#cboParalelos").on("change", function () {
         var $combo = $(this);
-        // var valorSeleccionado = $combo.val();
         var idAsignaturaSeleccionada = $combo.val();
         var idParaleloSeleccionado = $combo.find('option:selected').attr('data-paralelo');
-        var tipoAsignaturaSeleccionada = $combo.find('option:selected').attr('data-tipo') || 1;
+        var tipoAsignaturaSeleccionada = $combo.find('option:selected').attr('data-tipo') || "1";
 
         // 1. VALIDACIÓN PREVENTIVA: Si no hay selección válida, limpiar la sábana
         if (!idAsignaturaSeleccionada || idAsignaturaSeleccionada.trim() === "" || idAsignaturaSeleccionada === "0") {
-            // Limpiar ambos paneles con mensajes coherentes orientados al flujo horizontal
-            /* $("#contenedor_asignaturas_docente").html(
-                '<div class="text-muted text-center" style="width: 100%; padding: 15px 0; color: #999; font-size: 13px;">' +
-                '<i class="fa fa-arrow-up" style="margin-right: 5px; color: #ccc;"></i>' +
-                'Seleccione un paralelo arriba para desplegar las materias...' +
-                '</div>'
-            ); */
-
-            // 3. Mostrar mensaje de carga en la sábana extendida
             $("#lista_estudiantes_paralelo").html(
                 '<div class="text-muted text-center" style="padding: 60px 20px; color: #999;">' +
                 '<i class="fa fa-hand-o-up fa-2x" style="margin-bottom: 10px; color: #ccc;"></i>' +
-                '<p style="margin: 0; font-size: 13px;">Seleccione una asignatura del panel superior para cargar la nómina de alumnos...</p>' +
+                '<p style="margin: 0; font-size: 13px;">Seleccione un paralelo y una asignatura en el menú superior para cargar la nómina de alumnos...</p>' +
                 '</div>'
             );
-
+            $("#id_paralelo").val('');
             $("#id_asignatura").val('');
             $("#id_paralelo_excel").val('');
             $("#id_asignatura_excel").val('');
@@ -41,106 +30,37 @@ $(document).ready(function () {
             return;
         }
 
-        // 2. Sincronizar inputs ocultos requeridos para tu sistema
+        // 2. Sincronizar inputs ocultos requeridos por tu sistema
+        $("#id_paralelo").val(idParaleloSeleccionado);
         $("#id_asignatura").val(idAsignaturaSeleccionada);
         $("#id_paralelo_excel").val(idParaleloSeleccionado);
         $("#id_asignatura_excel").val(idAsignaturaSeleccionada);
 
-        // 3. Limpiar la sábana indicando que elija una materia de arriba para ver su sábana
+        // 3. Mostrar mensaje de carga en la sábana extendida
         $("#lista_estudiantes_paralelo").html(
-            '<div class="text-muted text-center" style="padding: 60px 20px; color: #999;">' +
-            '<i class="fa fa-hand-o-up fa-2x" style="margin-bottom: 10px; color: #ccc;"></i>' +
-            '<p style="margin: 0; font-size: 13px;">Seleccione una asignatura del panel superior para cargar la nómina de alumnos...</p>' +
+            '<div class="text-center text-muted" style="padding: 100px 20px;">' +
+            '<i class="fa fa-refresh fa-spin fa-2x" style="color: #3c8dbc; margin-bottom: 10px;"></i>' +
+            '<p class="small" style="margin-top: 10px;">Buscando nómina de estudiantes y calificaciones...</p>' +
             '</div>'
         );
 
-        // Ocultar botón de reporte hasta que elija una materia
         $("#ver_reporte").hide();
         $("#save_all").hide();
 
-        // 4. Disparar directamente la carga de los alumnos de la asignatura seleccionada
-        obtenerNominaEstudiantes(idAsignaturaSeleccionada, tipoAsignaturaSeleccionada);
+        // 4. Disparar directamente la carga de alumnos de la asignatura seleccionada
+        obtenerNominaEstudiantes(idParaleloSeleccionado, idAsignaturaSeleccionada, tipoAsignaturaSeleccionada);
     });
 
-    /**
-     * Realiza una única petición al backend para obtener los paralelos y sus materias asociadas,
-     * estructurando el árbol visual mediante etiquetas <optgroup> de HTML
-     */
-    function cargarParalelosYAsignaturasDocente() {
-        var $cboParalelos = $('#cboParalelos');
-        var $listaEstudiantes = $('#lista_estudiantes_paralelo');
-
-        $cboParalelos.empty();
-
-        // Apuntamos al controlador encargado de traernos el árbol estructurado
-        $.ajax({
-            type: "POST",
-            url: "calificaciones/cargar_paralelos_docente.php",
-            data: { _t: Date.now() },
-            dataType: "json"
-        }).done(function (data) {
-            if (!data || data === false || data.length === 0) {
-                $cboParalelos.html('<option value="">Sin paralelos asignados</option>').prop('disabled', true);
-                $listaEstudiantes
-                    .removeClass("text-success")
-                    .addClass("text-warning")
-                    .html(
-                        '<div class="alert alert-warning" style="margin: 10px 0; font-weight: normal;">' +
-                        '<i class="fa fa-exclamation-triangle"></i> Usted no tiene paralelos ni asignaturas asignadas en este periodo lectivo.' +
-                        '</div>'
-                    );
-                return;
-            }
-
-            // Opción inicial neutra
-            $cboParalelos.append('<option value="" data-paralelo="">-- Seleccione una Materia / Paralelo --</option>');
-
-            // Recorrer los paralelos e ir armando los grupos dinámicos
-            $.each(data, function (index, paralelo) {
-                // El nombre completo del paralelo actúa como cabecera no seleccionable del grupo
-                var $grupo = $('<optgroup>').attr('label', '🔹 ' + (paralelo.nombre_paralelo || 'Paralelo'));
-
-                if (paralelo.asignaturas && paralelo.asignaturas.length > 0) {
-                    $.each(paralelo.asignaturas, function (i, asignatura) {
-                        var $opcion = $('<option>')
-                            .val(asignatura.id_asignatura)
-                            .text(asignatura.nombre_asignatura)
-                            .attr('data-paraelelo', paralelo.id_paralelo) // Inyección del ID del paralelo en metadato
-                            .attr('data-tipo', asignatura.tipo_asignatura || '1'); // Tipo cualitativo/cuantitativo
-
-                        $grupo.append($opcion);
-                    });
-                } else {
-                    $grupo.append('<option disabled>No hay materias asignadas</option>');
-                }
-
-                $cboParalelos.append($grupo);
-            });
-
-            $cboParalelos.prop('disabled', false);
-            $listaEstudiantes
-                .removeClass("text-success text-warning")
-                .addClass("text-danger fw-bold")
-                .html('<div style="padding: 3px"><i class="fa fa-info-circle"></i> Debe elegir una asignatura del listado...</div>');
-        }).fail(function (jqXHR) {
-            console.log("Error crítico al recuperar mapeo de datos:", jqXHR.responseText);
-            alert("Error de conexión al cargar el árbol de paralelos y asignaturas.");
-        });
-
-    }
-
-    // Función auxiliar para redondear a dos decimales de forma exacta (Mismo comportamiento de PHP)
+    // Función auxiliar para redondear a dos decimales de forma exacta
     function redondearDosDecimales(valor) {
         let numero = parseFloat(valor);
         if (isNaN(numero) || numero === 0) return 0;
-
-        // Redondeo matemático seguro que simula a la perfección el PHP_ROUND_HALF_UP
         return Number(Math.round(numero + 'e2') + 'e-2');
     }
 
     /* 
        ===================================================================
-       1. MOTOR DE NAVEGACIÓN Y SCROLL FLUIDO ESTILO EXCEL (REPARADO Y SUAVE)
+       1. MOTOR DE NAVEGACIÓN Y SCROLL FLUIDO ESTILO EXCEL
        ===================================================================
     */
     $(document).on('keydown', '.excel-cell', function (e) {
@@ -150,12 +70,10 @@ $(document).ready(function () {
         var colIndex = $celdaActual.index();
         var $proximoInput = $();
 
-        // Si la tecla presionada no es de dirección o Enter, ignorar
         if (["ArrowRight", "ArrowLeft", "ArrowDown", "ArrowUp", "Enter"].indexOf(e.key) === -1) {
             return;
         }
 
-        // Prevenir el scroll tosco y salto por defecto que hace el navegador
         e.preventDefault();
 
         switch (e.key) {
@@ -219,31 +137,23 @@ $(document).ready(function () {
                 break;
         }
 
-        // ===================================================================
-        // 🎯 CONTROL DE ENFOQUE Y SCROLL SIN EFECTO ELÁSTICO (REPARADO)
-        // ===================================================================
         if ($proximoInput.length) {
-            // 1. Activar el candado de movimiento para el guardado automático AJAX
             $inputActual.addClass('moving-focus');
 
-            // 2. Enfocar la celda destino
             if ($proximoInput) {
                 $proximoInput.focus();
                 $proximoInput.select();
             }
 
-            // Retirar el candado una vez que el foco cambió de forma segura
             $inputActual.removeClass('moving-focus');
 
             var $contenedorScroll = $("#tabla-sabana-scroll");
             if ($contenedorScroll.length === 0) return;
 
-            // Extraemos los elementos nativos puros usando el índice de arreglo
             var contenedorNativo = $contenedorScroll[0];
             var filaNativa = $proximoInput.closest('tr')[0];
             var celdaNativa = $proximoInput.closest('td')[0];
 
-            // 3. 🔒 CONTROL VERTICAL MAESTRO NATIVO BLINDADO
             if (filaNativa && typeof filaNativa.scrollIntoView === "function") {
                 filaNativa.scrollIntoView({
                     behavior: 'auto',
@@ -251,7 +161,6 @@ $(document).ready(function () {
                     inline: 'nearest'
                 });
             } else if (filaNativa && $contenedorScroll.length) {
-                // Failsafe por si el navegador bloquea la función nativa: scroll manual con jQuery
                 var altoCabecerasFijas = 114;
                 var topFila = $proximoInput.closest('tr').position().top + $contenedorScroll.scrollTop();
                 if (topFila < ($contenedorScroll.scrollTop() + altoCabecerasFijas)) {
@@ -259,19 +168,17 @@ $(document).ready(function () {
                 }
             }
 
-            // Compensación milimétrica por si la cabecera triple (114px) tapa al alumno de arriba al subir
             var altoCabecerasFijas = 114;
             if (contenedorNativo && filaNativa && filaNativa.offsetTop < (contenedorNativo.scrollTop + altoCabecerasFijas)) {
                 contenedorNativo.scrollTop = filaNativa.offsetTop - altoCabecerasFijas - 5;
             }
 
-            // 4. CONTROL HORIZONTAL FLUIDO (MANTIENE LA ESTABILIDAD DE LADOS)
             if (colIndex > 1) {
                 var celdaIzquierdaAbsoluta = celdaNativa.offsetLeft;
                 var celdaDerechaAbsoluta = celdaIzquierdaAbsoluta + celdaNativa.offsetWidth;
                 var scrollIzquierdoActual = contenedorNativo.scrollLeft;
                 var anchoVisibleContenedor = contenedorNativo.clientWidth;
-                var anchoColumnasFijas = 250; // Margen para el bloque fijo de nombres
+                var anchoColumnasFijas = 250;
 
                 if (celdaIzquierdaAbsoluta < (scrollIzquierdoActual + anchoColumnasFijas)) {
                     contenedorNativo.scrollLeft = celdaIzquierdaAbsoluta - anchoColumnasFijas - 15;
@@ -280,7 +187,6 @@ $(document).ready(function () {
                 }
             }
         }
-
     });
 
     /* ===================================================================
@@ -290,17 +196,14 @@ $(document).ready(function () {
     $(document).on('blur', 'input.excel-cell', function () {
         var $inputModificado = $(this);
 
-        // 🛡️ ESCUDO DE SEGURIDAD INTERNO: Si es un input de comportamiento, sal de aquí inmediatamente
         if ($inputModificado.data('tipo-input') === 'comportamiento') {
             return;
         }
 
-        // Control de seguridad por si la celda está bloqueada
         if ($inputModificado.is(':disabled')) {
             return false;
         }
 
-        // 🎯 CAPTURA SEGURA: Leemos el valor y nos aseguramos de que no sea null ni undefined
         var valorCrudo = $inputModificado.val();
         var valorTexto = (valorCrudo !== null && valorCrudo !== undefined) ? valorCrudo.toString().trim() : "-";
 
@@ -316,17 +219,15 @@ $(document).ready(function () {
             $inputModificado.css('color', coloresEscala[valorTexto] || '#333');
             notaParaEnviar = (valorTexto === "-") ? "" : valorTexto;
             ejecutarGuardadoAjax($inputModificado, notaParaEnviar);
-            return;
+            return; 
         }
 
-        // Si la celda está vacía o tiene un guion, se estandariza a "-" 
         if (valorTexto === "" || valorTexto === "-") {
             $inputModificado.val("-").css({ 'color': '', 'font-weight': '' });
-            notaParaEnviar = "";
+            notaParaEnviar = ""; 
         } else {
             var valorFormatear = parseFloat(valorTexto) || 0;
 
-            // 🔒 CONTROL DE SEGURIDAD: Validar rango escolar de 0.00 a 10.00
             if (valorFormatear < 0 || valorFormatear > 10) {
                 Swal.fire({
                     icon: 'warning',
@@ -336,7 +237,7 @@ $(document).ready(function () {
                     showConfirmButton: false
                 });
                 $inputModificado.val("-").css({ 'color': '', 'font-weight': '' });
-                return;
+                return; 
             } else {
                 $inputModificado.val(valorFormatear.toFixed(2));
                 notaParaEnviar = valorFormatear.toFixed(2);
@@ -344,19 +245,13 @@ $(document).ready(function () {
         }
 
         var $fila = $inputModificado.closest('tr.row-alumno-sabana');
-        var idEstudiante = $inputModificado.data('estudiante');
         var idAporteActual = $inputModificado.data('aporte');
         var idPeriodoActual = $inputModificado.data('periodo');
-        var idRubricaActual = $inputModificado.data('rubrica');
 
-        // =========================================================================
-        // TRIPLE CASCADA DE CÁLCULO TRADUCIDA AL MODELO POLINÓMICO PONDERADO
-        // =========================================================================
-
-        // --- SUB-PROCESO 1: PROMEDIO DEL APORTE (PARCIAL O EXAMEN INDIVIDUAL) ---
+        // --- SUB-PROCESO 1: PROMEDIO DEL APORTE ---
         var sumaInsumos = 0;
         var $insumosDelAporte = $fila.find('.excel-cell[data-aporte="' + idAporteActual + '"]');
-        var cantidadInsumosDefinidos = $insumosDelAporte.length;
+        var cantidadInsumosDefinidos = $insumosDelAporte.length; 
 
         $insumosDelAporte.each(function () {
             var textoInsumo = $(this).val().trim();
@@ -374,7 +269,6 @@ $(document).ready(function () {
             promedioAporte = Number(Math.floor((promedioCrudo + 0.000001) * 100) / 100);
         }
 
-        // Actualizar la celda visual del parcial en pantalla
         var $celdaPromAporte = $fila.find('.promedio-aporte-dinamico[data-aporte="' + idAporteActual + '"]');
         if ($celdaPromAporte.length) {
             $celdaPromAporte.html('<b>' + (sumaInsumos === 0 ? '-' : promedioAporte.toFixed(2)) + '</b>');
@@ -387,7 +281,6 @@ $(document).ready(function () {
             }
         }
 
-        // Estilo estático en vivo de la celda que se está digitando
         var valorInputActual = parseFloat($inputModificado.val());
         if (!isNaN(valorInputActual) && valorInputActual > 0 && valorInputActual < 7) {
             $inputModificado.css({ 'color': '#dd4b39', 'font-weight': 'bold' });
@@ -395,19 +288,15 @@ $(document).ready(function () {
             $inputModificado.css({ 'color': '#3c763d', 'font-weight': 'normal' });
         }
 
-        // --- SUB-PROCESO 2: PROMEDIO DEL PERIODO (BIMESTRAL/TRIMESTRAL CON DIVISOR FIJO AL 100%) ---
+        // --- SUB-PROCESO 2: PROMEDIO DEL PERIODO ---
         var promedioPonderadoBimestral = 0;
-
-        // 🔒 FIX: Forzamos el divisor a 1.00 (100% de la nota) para que no sea un promedio móvil
-        var sumaPonderacionesEfectivas = 1.00;
+        var sumaPonderacionesEfectivas = 1.00; 
 
         $fila.find('.promedio-aporte-dinamico[data-periodo="' + idPeriodoActual + '"]').each(function () {
             var $celdaParcial = $(this);
             var idAporte = $celdaParcial.data('aporte');
-
             var $inputPatron = $fila.find('.excel-cell[data-aporte="' + idAporte + '"]').first();
             var ponderacion = parseFloat($inputPatron.data('ponderacion')) || 0;
-
             var textoPromAporte = $celdaParcial.text().trim();
 
             if (textoPromAporte !== "" && textoPromAporte !== "-") {
@@ -416,18 +305,14 @@ $(document).ready(function () {
             }
         });
 
-        // 🎯 FIX: También debemos escanear si el Examen Individual u otros insumos directos sumaron puntos
-        // buscando inputs directos del periodo que no formen parte de los parciales tradicionales agrupados
         $fila.find('.excel-cell[data-periodo="' + idPeriodoActual + '"]').each(function () {
             var $inputDirecto = $(this);
-            // Si el input tiene tipo de aporte diferente al parcial acumulado (ej. Examen) y no ha sido procesado arriba
-            if ($inputDirecto.data('tipo-aporte') != '1') {
+            if ($inputDirecto.data('tipo-aporte') != '1') { 
                 var textoDirecto = $inputDirecto.val().trim();
                 var ponderacionDirecta = parseFloat($inputDirecto.data('ponderacion')) || 0;
-
+                
                 if (textoDirecto !== "" && textoDirecto !== "-") {
                     var valDirecto = parseFloat(textoDirecto) || 0;
-                    // Evitamos duplicar sumando solo si el elemento padre no pertenece a un promedio dinámico ya calculado
                     if (!$inputDirecto.closest('td').hasClass('promedio-aporte-dinamico')) {
                         promedioPonderadoBimestral += (valDirecto * ponderacionDirecta);
                     }
@@ -437,13 +322,10 @@ $(document).ready(function () {
 
         var promedioPeriodo = 0;
         if (sumaPonderacionesEfectivas > 0) {
-            // El resultado se divide directamente para 1.00, manteniendo la penalización por notas faltantes
             promedioPeriodo = Number(Math.round(promedioPonderadoBimestral + 'e2') + 'e-2');
         }
 
-        // ACTUALIZACIÓN DINÁMICA DE LA COLUMNA DE PROMEDIO TRIMESTRAL
         var $celdaPromPeriodo = $fila.find('.promedio-periodo-dinamico[data-periodo="' + idPeriodoActual + '"]');
-
         if ($celdaPromPeriodo.length) {
             if (promedioPeriodo === 0) {
                 $celdaPromPeriodo.html('<b>-</b>').css({ 'color': '#999', 'background-color': '#f5f5f5' });
@@ -492,9 +374,6 @@ $(document).ready(function () {
             }
         }
 
-        // =========================================================================
-        // 🚀 ENVÍO Y GUARDADO AUTOMÁTICO VÍA AJAX (EFECTO AUTO-SAVE)
-        // =========================================================================
         $inputModificado.css('border-bottom', '2px solid #f39c12');
         ejecutarGuardadoAjax($inputModificado, notaParaEnviar);
     });
@@ -537,8 +416,8 @@ $(document).ready(function () {
     });
 
     /* ===================================================================
-   🎯 OPTIMIZADOR EXCEL: DETECTOR DE CELDAS MODIFICADAS
-   =================================================================== */
+    DETECTOR DE CELDAS MODIFICADAS
+    =================================================================== */
     $(document).on("input change", "#tabla-sabana-scroll .excel-cell", function () {
         $(this).addClass("dirty-cell");
         $("#save_all").addClass("btn-save-pulse");
@@ -598,8 +477,8 @@ $(document).ready(function () {
         });
     });
 
-    // 🎯 VALIDACIÓN ESTRICTA PARA LA NOTA DE COMPORTAMIENTO (S, F, O, N)
-    $('#lista_estudiantes_paralelo').on('input keyup paste', 'input[data-tipo-input="comportamiento"]', function (e) {
+    // VALIDACIÓN ESTRICTA PARA LA NOTA DE COMPORTAMIENTO (S, F, O, N)
+    $('#lista_estudiantes_paralelo').on('input keyup paste', 'input[data-tipo-input="comportamiento"]', function () {
         var elemento = $(this);
         var valorOriginal = elemento.val().toUpperCase();
         var valorValidado = valorOriginal.replace(/[^SFON]/g, '');
@@ -611,17 +490,15 @@ $(document).ready(function () {
         elemento.val(valorValidado);
 
         switch (valorValidado) {
-            case 'S': elemento.css('color', '#3c763d'); break;
-            case 'F': elemento.css('color', '#31708f'); break;
-            case 'O': elemento.css('color', '#8a6d3b'); break;
-            case 'N': elemento.css('color', '#a94442'); break;
-            default: elemento.css('color', '#0d47a1');
+            case 'S': elemento.css('color', '#3c763d'); break; 
+            case 'F': elemento.css('color', '#31708f'); break; 
+            case 'O': elemento.css('color', '#8a6d3b'); break; 
+            case 'N': elemento.css('color', '#a94442'); break; 
+            default: elemento.css('color', '#0d47a1');        
         }
     });
 
-    // =========================================================================
-    // 🎯 EVENTO AUTOMÁTICO PARA GUARDAR COMPORTAMIENTO (INPUTS TEXT)
-    // =========================================================================
+    // EVENTO AUTOMÁTICO PARA GUARDAR COMPORTAMIENTO
     $(document).on('blur', 'input[data-tipo-input="comportamiento"]', function () {
         var $inputModificado = $(this);
 
@@ -635,7 +512,7 @@ $(document).ready(function () {
 
         if (valorTexto === "" || valorTexto === "-") {
             $inputModificado.val("-").css('color', '#333');
-            notaParaEnviar = "";
+            notaParaEnviar = ""; 
         } else {
             var letrasValidas = ['S', 'F', 'O', 'N'];
 
@@ -648,7 +525,7 @@ $(document).ready(function () {
                     showConfirmButton: false
                 });
                 $inputModificado.val("-").css('color', '#333');
-                return;
+                return; 
             }
 
             $inputModificado.val(valorTexto);
@@ -662,7 +539,7 @@ $(document).ready(function () {
 
         $inputModificado.data('estudiante', $inputModificado.data('id-estudiante'));
         $inputModificado.data('aporte', $inputModificado.data('id-aporte'));
-        $inputModificado.data('rubrica', 0);
+        $inputModificado.data('rubrica', 0); 
         $inputModificado.data('periodo', $inputModificado.closest('td').prev().find('input').data('periodo') || 0);
 
         ejecutarGuardadoAjax($inputModificado, notaParaEnviar);
@@ -679,270 +556,82 @@ function verificarConfiguracionCopiarPegar() {
         type: "POST",
         dataType: "json"
     })
-        .done(function (resp) {
-            $("#in_copiar_y_pegar").val(resp.in_copiar_y_pegar);
-        })
-        .fail(function (jqXHR) {
-            console.error("Error al obtener estado copiar/pegar:", jqXHR.responseText);
-        });
+    .done(function (resp) {
+        $("#in_copiar_y_pegar").val(resp.in_copiar_y_pegar);
+    })
+    .fail(function (jqXHR) {
+        console.error("Error al obtener estado copiar/pegar:", jqXHR.responseText);
+    });
 }
 
 /**
- * Carga los paralelos asignados al docente actual.
+ * Carga paralelos y asignaturas en formato JSON y construye los <optgroup>
  */
-/* function cargarParalelosDocente() {
+function cargarParalelosYAsignaturasDocente() {
     var $cboParalelos = $('#cboParalelos');
     var $listaEstudiantes = $("#lista_estudiantes_paralelo");
 
     $cboParalelos.empty();
 
-    $.post("calificaciones/cargar_paralelos_docente.php", {
-        _t: Date.now()
+    $.ajax({
+        url: "calificaciones/cargar_paralelos_docente.php",
+        type: "POST",
+        dataType: "json",
+        data: { _t: Date.now() }
     })
-        .done(function (resultado) {
-            var datosLimpios = resultado.trim();
+    .done(function (data) {
+        // Validación segura sobre el arreglo JSON
+        if (!Array.isArray(data) || data.length === 0) {
+            $cboParalelos.html('<option value="">Sin paralelos asignados</option>').prop('disabled', true);
+            $listaEstudiantes
+                .removeClass("text-success")
+                .addClass("text-warning")
+                .html(
+                    '<div class="alert alert-warning" style="margin: 10px 0; font-weight: normal;">' +
+                    '<i class="fa fa-exclamation-triangle"></i> Usted no tiene paralelos ni asignaturas asignadas en este periodo lectivo.' +
+                    '</div>'
+                );
+            return;
+        }
 
-            if (datosLimpios === "false") {
-                alert("Error al cargar los datos de los paralelos.");
+        $cboParalelos.append('<option value="" data-paralelo="">-- Seleccione una Materia / Paralelo --</option>');
+
+        $.each(data, function (index, paralelo) {
+            var $grupo = $('<optgroup>').attr('label', '🔹 ' + (paralelo.nombre_paralelo || 'Paralelo'));
+
+            if (Array.isArray(paralelo.asignaturas) && paralelo.asignaturas.length > 0) {
+                $.each(paralelo.asignaturas, function (i, asignatura) {
+                    var $opcion = $('<option>')
+                        .val(asignatura.id_asignatura)
+                        .text(asignatura.nombre_asignatura)
+                        .attr('data-paralelo', paralelo.id_paralelo)
+                        .attr('data-tipo', asignatura.tipo_asignatura || '1');
+                    
+                    $grupo.append($opcion);
+                });
+            } else {
+                $grupo.append('<option disabled>No hay materias asignadas</option>');
             }
-            else if (datosLimpios.endsWith("SIN_REGISTROS")) {
-                $cboParalelos.html('<option value="">Sin paralelos asignados</option>').prop('disabled', true);
-                $listaEstudiantes
-                    .removeClass("text-success")
-                    .addClass("text-warning")
-                    .html(
-                        '<div class="alert alert-warning" style="margin: 10px 0; font-weight: normal;">' +
-                        '<i class="fa fa-exclamation-triangle"></i> Usted no tiene paralelos ni asignaturas asignadas en este periodo lectivo.' +
-                        '</div>'
-                    );
-            }
-            else {
-                $cboParalelos.html(datosLimpios).prop('disabled', false);
-                $listaEstudiantes
-                    .removeClass("text-success text-warning")
-                    .addClass("text-danger fw-bold")
-                    .html('<div style="padding: 3px"><i class="fa fa-info-circle"></i> Debe elegir un paralelo...</div>');
-            }
-        })
-        .fail(function () {
-            alert("Error de conexión al cargar paralelos.");
+
+            $cboParalelos.append($grupo);
         });
-} */
+
+        $cboParalelos.prop('disabled', false);
+        $listaEstudiantes
+            .removeClass("text-success text-warning")
+            .addClass("text-danger fw-bold")
+            .html('<div style="padding: 3px"><i class="fa fa-info-circle"></i> Debe elegir una asignatura del listado...</div>');
+    })
+    .fail(function (jqXHR) {
+        console.error("Error al cargar paralelos y asignaturas:", jqXHR.responseText);
+        alert("Error de conexión al cargar paralelos.");
+    });
+}
 
 /**
- * Carga los aportes de evaluación según el paralelo seleccionado.
+ * Obtiene la nómina de estudiantes matriculados
  */
-function cargarAportesEvaluacion() {
-    var id_paralelo = $("#cboParalelos").val();
-    var $cboAportes = $('#cboAportesEvaluacion');
-    var $listaEstudiantes = $("#lista_estudiantes_paralelo");
-
-    $cboAportes.empty();
-
-    $.post("calificaciones/cargar_aportes_evaluacion_paralelo.php", {
-        id_paralelo: id_paralelo
-    })
-        .done(function (resultado) {
-            if (resultado === false || resultado === "false") {
-                $listaEstudiantes
-                    .removeClass("text-success")
-                    .addClass("text-danger fw-bold")
-                    .html('<div class="p-3"><i class="fa fa-warning"></i> No existen aportes de evaluación asociados a este paralelo...</div>');
-            } else {
-                $cboAportes.append(resultado);
-                $listaEstudiantes
-                    .removeClass("text-success")
-                    .addClass("text-danger fw-bold")
-                    .html('<div class="p-3"><i class="fa fa-info-circle"></i> Debe elegir un aporte de evaluación...</div>');
-            }
-        })
-        .fail(function () {
-            alert("Error de conexión al cargar aportes de evaluación.");
-        });
-}
-
-/*function cargarAsignaturasDocente() {
-    contarAsignaturasDocente();
-}*/
-
-/*function contarAsignaturasDocente() {
-    var id_paralelo = $("#cboParalelos").val();
-
-    Swal.fire({
-        title: 'Cargando asignaturas...',
-        text: 'Por favor, espere un momento.',
-        allowOutsideClick: false,
-        allowEscapeKey: false,
-        didOpen: () => {
-            Swal.showLoading();
-        }
-    });
-
-    $.post("calificaciones/contar_asignaturas_paralelo.php", {
-        id_paralelo: id_paralelo
-    })
-        .done(function (resultado) {
-            var datosLimpios = resultado ? resultado.trim() : "";
-
-            if (datosLimpios === "false" || datosLimpios === "") {
-                Swal.close();
-                limpiarPanelesPorError("No se encontraron asignaturas asignadas.");
-            } else {
-                try {
-                    var respuestaServer = JSON.parse(datosLimpios);
-                    var total_registros = parseInt(respuestaServer.num_registros) || 0;
-
-                    $("#num_asignaturas").html("Número de Asignaturas: " + total_registros);
-
-                    if (total_registros > 0) {
-                        obtenerDetalleAsignaturas(id_paralelo);
-                    } else {
-                        Swal.close();
-                        limpiarPanelesPorError("No hay asignaturas disponibles para este paralelo.");
-                    }
-                } catch (error) {
-                    Swal.close();
-                    console.error("Error al procesar JSON de conteo:", error, datosLimpios);
-                    limpiarPanelesPorError("Error en el formato de datos.");
-                }
-            }
-        })
-        .fail(function () {
-            Swal.close();
-            limpiarPanelesPorError("Error de conexión al contar asignaturas.");
-        });
-}*/
-
-/*function obtenerDetalleAsignaturas(id_paralelo) {
-    $.post("calificaciones/listar_asignaturas_docente.php", {
-        id_paralelo: id_paralelo
-    })
-        .done(function (resultadoDetalle) {
-            Swal.close();
-
-            if (typeof resultadoDetalle === "object" && resultadoDetalle !== null) {
-                if (resultadoDetalle.error) {
-                    limpiarPanelesPorError(resultadoDetalle.error);
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error del Servidor',
-                        text: resultadoDetalle.error
-                    });
-                } else {
-                    listarAsignaturasDocente(resultadoDetalle);
-                }
-            } else {
-                try {
-                    var datosLimpios = resultadoDetalle ? resultadoDetalle.trim() : "";
-                    if (datosLimpios === "" || datosLimpios === "false") {
-                        limpiarPanelesPorError("No se pudieron cargar los detalles.");
-                    } else {
-                        var listaAsignaturas = JSON.parse(datosLimpios);
-                        listarAsignaturasDocente(listaAsignaturas);
-                    }
-                } catch (e) {
-                    console.error("Error al procesar el string de asignaturas:", e);
-                    limpiarPanelesPorError("Error en el formato de datos devuelto.");
-                }
-            }
-        })
-        .fail(function (jqXHR) {
-            Swal.close();
-            console.error("Error en la petición de detalles:", jqXHR.responseText);
-            limpiarPanelesPorError("Error al recuperar el listado de asignaturas.");
-        });
-}*/
-
-/*function listarAsignaturasDocente(listaAsignaturasJSON) {
-    var $contenedor = $("#contenedor_asignaturas_docente");
-
-    if (!Array.isArray(listaAsignaturasJSON) || listaAsignaturasJSON.length === 0) {
-        $contenedor.html('<div class="text-center text-muted" style="width: 100%; padding: 10px;">No hay asignaturas disponibles</div>');
-        return;
-    }
-
-    $contenedor.empty();
-
-    listaAsignaturasJSON.forEach(function (item) {
-        var id = item.id_asignatura || item.id || "0";
-        var nombre = item.nombre_asignatura || item.nombre || item.asignatura || "Sin nombre";
-        var tipoAsignatura = item.tipo_asignatura || item.id_tipo_asignatura || "1";
-
-        // Renderizado adaptado en formato de tarjeta/botón horizontal alineado con tu CSS
-        var htmlItem =
-            '<div class="materia-btn-item" data-id="' + id + '" data-tipo="' + tipoAsignatura + '">' +
-            '<i class="fa fa-book text-muted" style="margin-right: 6px;"></i> ' + nombre +
-            ' <span class="badge" style="font-size: 9px; background-color: rgba(0,0,0,0.1); color: #666; margin-left: 5px;">ID: ' + id + '</span>' +
-            '</div>';
-
-        $contenedor.append(htmlItem);
-    });
-}*/
-
-// =========================================================================
-// 🎯 INTERCEPTOR REFACTORIZADO PARA EL NUEVO ENTORNO DE BOTONES HORIZONTALES
-// =========================================================================
-$(document).on("click", ".materia-btn-item", function (e) {
-    e.preventDefault();
-
-    $("#ver_reporte").hide();
-    $("#save_all").hide();
-
-    var $botonSeleccionado = $(this);
-
-    // Reiniciar los estados de todos los botones horizontales superiores
-    $(".materia-btn-item")
-        .removeClass("active")
-        .css({
-            "background-color": "#f4f4f4",
-            "color": "#444",
-            "border-color": "#ddd"
-        });
-
-    // Destacar únicamente el botón seleccionado con el estilo primario de AdminLTE
-    $botonSeleccionado
-        .addClass("active")
-        .css({
-            "background-color": "#3c8dbc",
-            "color": "#fff",
-            "border-color": "#357ca5"
-        });
-
-    var idAsignaturaSeleccionada = $botonSeleccionado.data("id");
-    var tipoAsignaturaSeleccionada = $botonSeleccionado.data("tipo");
-
-    $("#id_asignatura").val(idAsignaturaSeleccionada);
-    $("#ver_reporte").hide();
-
-    // Mensaje de carga limpio adaptado a todo el ancho de la sábana extendida
-    $("#lista_estudiantes_paralelo").html(
-        '<div class="text-center text-muted" style="padding: 100px 20px;">' +
-        '<i class="fa fa-refresh fa-spin fa-2x" style="color: #3c8dbc; margin-bottom: 10px;"></i>' +
-        '<p class="small" style="margin-top: 10px;">Buscando nómina de estudiantes y calificaciones...</p>' +
-        '</div>'
-    );
-
-    obtenerNominaEstudiantes(idAsignaturaSeleccionada, tipoAsignaturaSeleccionada);
-});
-
-function limpiarPanelesPorError(mensaje) {
-    $("#contenedor_asignaturas_docente").html(
-        '<div class="text-center text-muted" style="width: 100%; padding: 15px 0;">' +
-        '<p class="small text-danger"><i class="fa fa-exclamation-triangle"></i> ' + mensaje + '</p>' +
-        '</div>'
-    );
-    $("#lista_estudiantes_paralelo").html(
-        '<div class="text-center text-muted" style="padding: 30px;">' +
-        '<i class="fa fa-exclamation-circle text-warning"></i> No se pueden cargar alumnos.' +
-        '</div>'
-    );
-    $("#num_asignaturas").html("Número de Asignaturas: 0");
-    $("#ver_reporte").hide();
-}
-
-function obtenerNominaEstudiantes(idAsignatura, tipoAsignatura) {
-    var id_paralelo = $("#cboParalelos").val();
-
+function obtenerNominaEstudiantes(id_paralelo, idAsignatura, tipoAsignatura) {
     Swal.fire({
         title: 'Cargando estudiantes...',
         text: 'Buscando registros en la base de datos.',
@@ -953,69 +642,65 @@ function obtenerNominaEstudiantes(idAsignatura, tipoAsignatura) {
         }
     });
 
-    $("#id_paralelo").val(id_paralelo);
-    $("#id_asignatura").val(idAsignatura);
-
     $.post("calificaciones/cargar_estudiantes.php", {
         id_paralelo: id_paralelo,
         id_asignatura: idAsignatura,
-        id_tipo_asignatura: tipoAsignatura
+        id_tipo_asignatura: tipoAsignatura 
     })
-        .done(function (resultadoAlumnos) {
-            Swal.close();
+    .done(function (resultadoAlumnos) {
+        Swal.close();
 
-            var datosLimpios = resultadoAlumnos ? resultadoAlumnos.trim() : "";
+        var datosLimpios = (typeof resultadoAlumnos === "string") ? resultadoAlumnos.trim() : "";
 
-            if (datosLimpios === "false" || datosLimpios === "") {
-                $("#lbl_total_estudiantes").html("0");
-                $("#lista_estudiantes_paralelo").html(
-                    '<div class="text-center p-4 text-muted" style="padding: 20px;">' +
-                    '<i class="fa fa-users"></i> No se encontraron estudiantes matriculados.' +
-                    '</div>'
-                );
-                $("#ver_reporte").hide();
-                $("#save_all").hide();
-            } else {
-                var tablaEnvoltorioConScroll = '<div id="tabla-sabana-scroll">' + resultadoAlumnos + '</div>';
-
-                $("#lista_estudiantes_paralelo")
-                    .removeClass("text-danger fw-bold")
-                    .html(tablaEnvoltorioConScroll);
-
-                $("#id_paralelo_excel").val(id_paralelo);
-                $("#id_asignatura_excel").val(idAsignatura);
-
-                $("#ver_reporte").show();
-
-                var permiteCopiarPegar = $("#in_copiar_y_pegar").val();
-                if (permiteCopiarPegar == "1" || permiteCopiarPegar === "1") {
-                    $("#save_all").show();
-                } else {
-                    $("#save_all").hide();
-                }
-
-                ajustarColumnasSticky();
-
-                var totalFilas = $("#tabla-sabana-scroll").find("tr.row-alumno-sabana").length;
-                if (totalFilas > 0) {
-                    $("#lbl_total_estudiantes").html(totalFilas);
-                }
-            }
-        })
-        .fail(function (jqXHR) {
-            Swal.close();
-            console.error("Error al cargar estudiantes:", jqXHR.responseText);
+        if (datosLimpios === "false" || datosLimpios === "") {
+            $("#lbl_total_estudiantes").html("0");
             $("#lista_estudiantes_paralelo").html(
-                '<div class="text-center p-4 text-danger">' +
-                '<i class="fa fa-ban"></i> Error al conectar con el servidor.' +
+                '<div class="text-center p-4 text-muted" style="padding: 20px;">' +
+                '<i class="fa fa-users"></i> No se encontraron estudiantes matriculados.' +
                 '</div>'
             );
-            Swal.fire({
-                icon: 'error',
-                title: 'Error de conexión',
-                text: 'Hubo un problema al recuperar la nómina. Inténtelo de nuevo.'
-            });
+            $("#ver_reporte").hide();
+            $("#save_all").hide();
+        } else {
+            var tablaEnvoltorioConScroll = '<div id="tabla-sabana-scroll">' + resultadoAlumnos + '</div>';
+
+            $("#lista_estudiantes_paralelo")
+                .removeClass("text-danger fw-bold")
+                .html(tablaEnvoltorioConScroll);
+
+            // Asegurar sincronización con el formulario de reporte Excel
+            $("#id_paralelo_excel").val(id_paralelo);
+            $("#id_asignatura_excel").val(idAsignatura);
+            $("#ver_reporte").show();
+
+            var permiteCopiarPegar = $("#in_copiar_y_pegar").val();
+            if (permiteCopiarPegar == "1" || permiteCopiarPegar === "1") {
+                $("#save_all").show();
+            } else {
+                $("#save_all").hide();
+            }
+
+            ajustarColumnasSticky();
+
+            var totalFilas = $("#tabla-sabana-scroll").find("tr.row-alumno-sabana").length;
+            $("#lbl_total_estudiantes").html(totalFilas > 0 ? totalFilas : "0");
+        }
+    })
+    .fail(function (jqXHR) {
+        Swal.close();
+        $("#lbl_total_estudiantes").html("0");
+        console.error("Error al cargar estudiantes:", jqXHR.responseText);
+        $("#lista_estudiantes_paralelo").html(
+            '<div class="text-center p-4 text-danger">' +
+            '<i class="fa fa-ban"></i> Error al conectar con el servidor.' +
+            '</div>'
+        );
+        Swal.fire({
+            icon: 'error',
+            title: 'Error de conexión',
+            text: 'Hubo un problema al recuperar la nómina. Inténtelo de nuevo.'
         });
+    });
 }
 
 function ajustarColumnasSticky() {
@@ -1089,7 +774,7 @@ function guardarTabla() {
         }
     });
 
-    var id_paralelo = $("#cboParalelos").val();
+    var id_paralelo = $("#id_paralelo").val();
     var id_asignatura = $("#id_asignatura").val();
 
     $.ajax({
@@ -1146,13 +831,27 @@ function ejecutarGuardadoAjax($element, nota) {
 
     var $contenedorScroll = $("#tabla-sabana-scroll");
 
+    var idParaleloActual = $("#id_paralelo").val();
+    var idAsignaturaActual = parseInt($("#id_asignatura").val(), 10) || 0;
+    var idTipoAsignaturaActual = $("#cboParalelos").find('option:selected').attr('data-tipo') || "1";
+
     if ($element.hasClass('moving-focus')) {
         $element.css('border-bottom', '2px solid #f39c12');
         $.ajax({
             url: "calificaciones/guardar_nota_individual.php",
             type: "POST",
             dataType: "json",
-            data: { id_estudiante: idEstudiante, id_rubrica: idRubrica, id_aporte: idAporte, id_periodo: idPeriodo, id_asignatura: parseInt($("#id_asignatura").val(), 10) || 0, id_paralelo: $("#cboParalelos").val(), id_tipo_asignatura: $(".materia-btn-item.active").data("tipo") || "1", tipo_nota: tipoNota, calificacion: nota },
+            data: { 
+                id_estudiante: idEstudiante, 
+                id_rubrica: idRubrica, 
+                id_aporte: idAporte, 
+                id_periodo: idPeriodo, 
+                id_asignatura: idAsignaturaActual, 
+                id_paralelo: idParaleloActual, 
+                id_tipo_asignatura: idTipoAsignaturaActual, 
+                tipo_nota: tipoNota, 
+                calificacion: nota 
+            },
             success: function (respuesta) {
                 if (respuesta && respuesta.status === "success") {
                     $element.css('border-bottom', '2px solid #00a65a');
@@ -1177,7 +876,17 @@ function ejecutarGuardadoAjax($element, nota) {
         url: "calificaciones/guardar_nota_individual.php",
         type: "POST",
         dataType: "json",
-        data: { id_estudiante: idEstudiante, id_rubrica: idRubrica, id_aporte: idAporte, id_periodo: idPeriodo, id_asignatura: parseInt($("#id_asignatura").val(), 10) || 0, id_paralelo: $("#cboParalelos").val(), id_tipo_asignatura: $("#cboParalelos").find('option:selected').attr('data-tipo') || "1", tipo_nota: tipoNota, calificacion: nota },
+        data: { 
+            id_estudiante: idEstudiante, 
+            id_rubrica: idRubrica, 
+            id_aporte: idAporte, 
+            id_periodo: idPeriodo, 
+            id_asignatura: idAsignaturaActual, 
+            id_paralelo: idParaleloActual, 
+            id_tipo_asignatura: idTipoAsignaturaActual, 
+            tipo_nota: tipoNota, 
+            calificacion: nota 
+        },
         success: function (respuesta) {
             if (respuesta && respuesta.status === "success") {
                 $element.css('border-bottom', '2px solid #00a65a');
@@ -1191,7 +900,7 @@ function ejecutarGuardadoAjax($element, nota) {
                 $element.css({ 'background-color': '#f2dede', 'border-bottom': '2px solid #dd4b39' });
             }
         },
-        error: function (jqXHR) {
+        error: function () {
             $element.css({ 'background-color': '#f2dede', 'border-bottom': '2px solid #dd4b39' });
             if ($contenedorScroll.length) { $contenedorScroll.scrollTop(posicionScrollTop); $contenedorScroll.scrollLeft(posicionScrollLeft); }
             const Toast = Swal.mixin({ toast: true, position: 'top-end', showConfirmButton: false, timer: 3000, timerProgressBar: true });

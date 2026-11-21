@@ -300,7 +300,7 @@ class RolController extends Controller
     }
 
     /**
-     * Muestra el árbol de menús y submenús para asignar permisos a un perfil.
+     * Muestra el árbol de menús y permisos granulares para asignar a un perfil.
      */
     public function permissions(int $id)
     {
@@ -337,11 +337,44 @@ class RolController extends Controller
         }
         unset($menu);
 
-        return $this->view('admin.roles.permissions', compact('title', 'role', 'menusPadre', 'permisosAsignados'));
+        // 4. Obtener IDs de permisos granulares asignados en sw_perfil_permiso
+        $granularesData = $this->roleModel->query(
+            "SELECT id_permiso FROM sw_perfil_permiso WHERE id_perfil = ?",
+            [$id],
+            'i'
+        )->get();
+        $granularesAsignados = array_map('intval', array_column($granularesData, 'id_permiso'));
+
+        // 5. Obtener catálogo activo de sw_permiso
+        $todosLosPermisos = $this->roleModel->query(
+            "SELECT id_permiso, nombre, slug, descripcion FROM sw_permiso WHERE deleted_at IS NULL ORDER BY slug ASC"
+        )->get();
+
+        // 6. Agrupar permisos tomando la última palabra del slug (ej: 'crear-usuario' -> 'Usuario')
+        $permisosAgrupados = [];
+        foreach ($todosLosPermisos as $perm) {
+            $partes = explode('-', $perm['slug']);
+
+            // Si tiene guion, toma el último elemento (end) como módulo; si no, lo envía a 'Generales'
+            $grupo = count($partes) > 1 ? ucfirst(end($partes)) : 'Generales';
+            $permisosAgrupados[$grupo][] = $perm;
+        }
+
+        // Ordenar las tarjetas alfabéticamente por nombre de módulo
+        ksort($permisosAgrupados);
+
+        return $this->view('admin.roles.permissions', compact(
+            'title',
+            'role',
+            'menusPadre',
+            'permisosAsignados',
+            'permisosAgrupados',
+            'granularesAsignados'
+        ));
     }
 
     /**
-     * Sincroniza los permisos seleccionados en sw_menu_perfil dentro de una transacción.
+     * Sincroniza menús (sw_menu_perfil) y permisos granulares (sw_perfil_permiso) en una transacción.
      */
     public function savePermissions(int $id)
     {
@@ -354,20 +387,17 @@ class RolController extends Controller
                 ]);
             }
 
-            // Recibimos el arreglo de checkboxes marcados (puede venir vacío si desmarcó todos)
+            // Recibimos menús y permisos marcados
             $menusSeleccionados = $_POST['menus'] ?? [];
             $menusIds = array_unique(array_map('intval', (array)$menusSeleccionados));
 
+            $permisosSeleccionados = $_POST['permisos'] ?? [];
+            $permisosIds = array_unique(array_map('intval', (array)$permisosSeleccionados));
+
             $this->roleModel->beginTransaction();
 
-            // 1. Eliminamos los permisos anteriores del perfil
-            $this->roleModel->query(
-                "DELETE FROM sw_menu_perfil WHERE id_perfil = ?",
-                [$id],
-                'i'
-            );
-
-            // 2. Insertamos los nuevos permisos marcados
+            // 1. Sincronizar Menús (sw_menu_perfil)
+            $this->roleModel->query("DELETE FROM sw_menu_perfil WHERE id_perfil = ?", [$id], 'i');
             foreach ($menusIds as $idMenu) {
                 if ($idMenu > 0) {
                     $this->roleModel->query(
@@ -378,11 +408,23 @@ class RolController extends Controller
                 }
             }
 
+            // 2. Sincronizar Permisos Granulares (sw_perfil_permiso)
+            $this->roleModel->query("DELETE FROM sw_perfil_permiso WHERE id_perfil = ?", [$id], 'i');
+            foreach ($permisosIds as $idPermiso) {
+                if ($idPermiso > 0) {
+                    $this->roleModel->query(
+                        "INSERT INTO sw_perfil_permiso (id_perfil, id_permiso) VALUES (?, ?)",
+                        [$id, $idPermiso],
+                        'ii'
+                    );
+                }
+            }
+
             $this->roleModel->commit();
 
             return $this->json([
                 'ok' => true,
-                'mensaje' => 'Permisos actualizados correctamente para el perfil ' . $role['pe_nombre'] . '.'
+                'mensaje' => 'Menús y permisos actualizados correctamente para el perfil ' . $role['pe_nombre'] . '.'
             ]);
         } catch (\Throwable $e) {
             $this->roleModel->rollBack();

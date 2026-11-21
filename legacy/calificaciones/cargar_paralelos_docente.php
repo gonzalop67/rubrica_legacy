@@ -4,8 +4,11 @@ header('Content-Type: application/json; charset=utf-8');
 require_once("../scripts/clases/class.mysql.php");
 $db = new MySQL();
 
-ini_set('session.cookie_samesite', 'Lax');
-session_start();
+// ini_set('session.cookie_samesite', 'Lax');
+// ASEGÚRATE DE QUE session_start() se ejecutó antes
+if (session_status() === PHP_SESSION_NONE) {
+  session_start();
+}
 
 $id_usuario = isset($_SESSION["id_usuario"]) ? intval($_SESSION["id_usuario"]) : 0;
 $id_periodo_lectivo = isset($_SESSION["id_periodo_lectivo"]) ? intval($_SESSION["id_periodo_lectivo"]) : 0;
