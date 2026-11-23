@@ -13,6 +13,8 @@
     <title>SIAE Web | @yield('title')</title>
     <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
 
+    <link rel="icon" type="image/x-icon" href="{{ $assetBase }}/public/img/favicon.ico">
+
     <script src="{{ $assetBase }}/bower_components/jquery/dist/jquery.min.js"></script>
     <script>
         const base_url = "{{ $assetBase }}";

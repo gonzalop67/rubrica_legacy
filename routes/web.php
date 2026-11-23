@@ -55,6 +55,17 @@ Route::group(['middleware' => [$authMiddleware, $permissionMiddleware]], functio
         Route::post(':id/permisos', [RolController::class, 'savePermissions']);
     });
 
+    // --- Módulo de Menús ---
+    Route::group(['prefix' => 'menus'], function () {
+        Route::get('/', [MenuController::class, 'index']);
+        Route::post('get_menu_ajax', [MenuController::class, 'get_menu_ajax']);
+        Route::post('guardar-orden', [MenuController::class, 'guardarOrden']);
+        Route::get(':id/edit', [MenuController::class, 'edit']);
+        Route::post('/', [MenuController::class, 'store']);
+        Route::post(':id/update', [MenuController::class, 'update']);
+        Route::post(':id/delete', [MenuController::class, 'destroy']);
+    });
+
     // --- Módulo de Tareas (Por Hacer) ---
     Route::group(['prefix' => 'tareas'], function () {
         Route::get('/', [TareaController::class, 'index']);
