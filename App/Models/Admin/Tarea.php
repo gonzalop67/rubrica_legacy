@@ -19,4 +19,23 @@ class Tarea extends Model
 
     // Activa o desactiva el Soft Delete según tus necesidades en la tabla
     protected bool $useSoftDeletes = true; 
+
+    public function validate(array $data, ?int $id = null): bool
+    {
+        $this->errors = [];
+
+        // Limpiar espacios múltiples en la tarea
+        $tarea = preg_replace('/\s+/', ' ', trim($data['tarea'] ?? ''));
+
+        // -------------------------------------------------------------
+        // VALIDACIÓN: TAREA
+        // -------------------------------------------------------------
+        if (empty($tarea)) {
+            $this->errors['tarea'] = "El campo Tarea es obligatorio.";
+        } elseif ($this->exists('tarea', $tarea, $id)) {
+            $this->errors['tarea'] = "Ya existe la Tarea en la base de datos.";
+        }
+
+        return empty($this->errors);
+    }
 }

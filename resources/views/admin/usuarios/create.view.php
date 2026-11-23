@@ -1,7 +1,7 @@
 @extends('layout.app')
 
 @section('title')
-    Nuevo Usuario
+    {{ $title }}
 @endsection
 
 @section('content')

@@ -25,7 +25,7 @@
                         </a>
                     </div>
                     <div class="col-sm-6">
-                        <form action="{{ $assetBase }}/roles" method="GET" role="search" class="pull-right"
+                        <form action="{{ $assetBase }}/tareas" method="GET" role="search" class="pull-right"
                             style="margin: 0;">
                             <div class="input-group input-group-sm" style="width: 250px;">
                                 <input type="text" name="search" class="form-control"
@@ -72,11 +72,12 @@
                                     <td class="text-center" style="vertical-align: middle;">
                                         <div class="btn-group">
                                             <a href="{{ $assetBase }}/tareas/{{ $tarea['id'] }}/edit"
-                                                class="btn btn-warning btn-xs" title="Editar Tarea">
+                                                class="btn btn-warning btn-sm" title="Editar Tarea">
                                                 <i class="fa fa-pencil"></i>
                                             </a>
-                                            <button type="button" class="btn btn-danger btn-xs"
-                                                onclick="confirmarEliminacion({{ $tarea['id'] }})" title="Eliminar Tarea">
+                                            <button type="button" class="btn btn-danger btn-sm btn-delete"
+                                                data-id="{{ $tarea['id'] }}" data-nombre="{{ $tarea['tarea'] }}"
+                                                title="Eliminar">
                                                 <i class="fa fa-trash"></i>
                                             </button>
                                         </div>
@@ -95,4 +96,8 @@
             </div>
         </div>
     </section>
+@endsection
+
+@section('scripts')
+    <script src="{{ $assetBase }}/js/pages/admin/tareas/index.js"></script>
 @endsection

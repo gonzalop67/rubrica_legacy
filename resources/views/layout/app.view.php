@@ -1,5 +1,7 @@
 @php
     $assetBase = rtrim(str_replace(['\\', '/public'], ['/', ''], dirname($_SERVER['SCRIPT_NAME'])), '/');
+    $avatar = !empty($_SESSION['us_avatar']) ? $_SESSION['us_avatar'] : 'default.png';
+    $userImage = $assetBase . '/public/uploads/' . $avatar;
 @endphp
 
 <!DOCTYPE html>
@@ -53,7 +55,7 @@
 
         <!-- Header -->
         <header class="main-header">
-            <a href="{{ RUTA_URL }}/admin.php?id_usuario={{ $idUsuarioEnc }}&id_perfil={{ $idPerfil }}&enlace=dashboard.php&nivel=0"
+            <a href="{{ $assetBase }}/admin.php?id_usuario={{ $idUsuarioEnc }}&id_perfil={{ $idPerfil }}&enlace=dashboard.php&nivel=0"
                 class="logo">
                 <span class="logo-mini"><b>SIAE</b></span>
                 <span class="logo-lg"><b>SIAE {{ $aniosPeriodoLectivo }}</b></span>
@@ -73,10 +75,10 @@
                             </a>
                             <ul class="dropdown-menu">
                                 <li><a href="{{ $assetBase }}/logout.php" class="btn-logout"><i
-                                            class="fa fa-sign-out" aria-hidden="true"></i> Salir</a></li>
+                                            class="fa fa-sign-out" aria-hidden="true"></i> Salir</a>
+                                </li>
+                            </ul>
                         </li>
-                    </ul>
-                    </li>
                     </ul>
                 </div>
             </nav>
@@ -127,13 +129,17 @@
                             </li>
                         @else
                             @php
-                                $urlSub = str_starts_with($sub['mnu_enlace'], '/')
-                                    ? $assetBase . $sub['mnu_enlace']
+                                $urlMenu = str_starts_with($menu['mnu_enlace'], '/')
+                                    ? $assetBase . $menu['mnu_enlace']
                                     : $assetBase .
-                                        "/admin.php?id_usuario={$idUsuarioEnc}&id_perfil={$idPerfil}&id_menu={$sub['id_menu']}&nivel={$sub['mnu_nivel']}";
+                                        "/admin.php?id_usuario={$idUsuarioEnc}&id_perfil={$idPerfil}&id_menu={$menu['id_menu']}&nivel={$menu['mnu_nivel']}";
                             @endphp
-                            <li><a href="{{ $urlMenu }}"><i class="{{ $menu['mnu_icono'] ?: 'fa fa-link' }}"></i>
-                                    <span>{{ $menu['mnu_texto'] }}</span></a></li>
+                            <li>
+                                <a href="{{ $urlMenu }}">
+                                    <i class="{{ $menu['mnu_icono'] ?: 'fa fa-link' }}"></i>
+                                    <span>{{ $menu['mnu_texto'] }}</span>
+                                </a>
+                            </li>
                         @endif
                     @endforeach
                 </ul>

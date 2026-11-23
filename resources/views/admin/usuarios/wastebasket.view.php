@@ -1,13 +1,13 @@
 @extends('layout.app')
 
 @section('title')
-    Papelera de Usuarios
+    {{ $title }}
 @endsection
 
 @section('content')
     <section class="content-header">
         <h1>
-            Papelera de Usuarios
+            {{ $title }}
             <small>Registros eliminados temporalmente</small>
         </h1>
     </section>

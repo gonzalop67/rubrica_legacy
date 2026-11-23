@@ -28,12 +28,13 @@ function humanizarFecha(string $fecha)
   }
 }
 
-if (!isset($_SESSION['usuario_logueado']))
+if (!isset($_SESSION['usuario_logueado']) || empty($_SESSION['id_periodo_lectivo'])) {
   header("Location: index.php");
-else {
+  exit;
+} else {
   // Recepción de las variables GET
-  $id_usuario = encrypter::decrypt($_GET['id_usuario']);
-  $id_perfil = $_GET["id_perfil"];
+  $id_usuario = (int) encrypter::decrypt($_GET['id_usuario']);
+  $id_perfil = (int) $_GET["id_perfil"];
 
   $db = new MySQL();
 
@@ -43,7 +44,7 @@ else {
                               WHERE id_perfil = $id_perfil");
   $perfil = $db->fetch_assoc($consulta);
   $nombrePerfil = strtoupper($perfil["pe_nombre"]);
-  $id_periodo_lectivo = $_SESSION["id_periodo_lectivo"];
+  $id_periodo_lectivo = (int) $_SESSION["id_periodo_lectivo"];
 
   // Si el perfil es TUTOR se obtienen TODOS los paralelos correspondientes
   $total_paralelos_tutor = 0;

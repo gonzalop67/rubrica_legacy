@@ -1,7 +1,7 @@
 @extends('layout.app')
 
 @section('title')
-    Editar Usuario
+    {{ $title }}
 @endsection
 
 @section('content')

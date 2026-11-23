@@ -58,6 +58,15 @@ Route::group(['middleware' => [$authMiddleware, $permissionMiddleware]], functio
     // --- Módulo de Tareas (Por Hacer) ---
     Route::group(['prefix' => 'tareas'], function () {
         Route::get('/', [TareaController::class, 'index']);
+        Route::get('create', [TareaController::class, 'create']);
+        Route::post('/', [TareaController::class, 'store']);
+        Route::get('wastebasket', [TareaController::class, 'wastebasket']);
+        Route::get(':id/edit', [TareaController::class, 'edit']);
+        Route::post(':id/update', [TareaController::class, 'update']);
+        Route::post(':id/check', [TareaController::class, 'check']);
+        Route::post(':id/delete', [TareaController::class, 'delete']);
+        Route::post(':id/restore', [TareaController::class, 'restore']);
+        Route::post(':id/destroy', [TareaController::class, 'destroy']);
     });
 
     // --- Módulo de Usuarios ---

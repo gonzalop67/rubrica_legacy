@@ -1,13 +1,13 @@
 @extends('layout.app')
 
 @section('title')
-    Lista de Usuarios
+    {{ $title }}
 @endsection
 
 @section('content')
     <section class="content-header">
         <h1>
-            Lista de Usuarios
+            {{ $title }}
             <small>Administración del sistema</small>
         </h1>
     </section>
@@ -115,7 +115,9 @@
             </div>
         </div>
     </section>
+@endsection
 
+@section('scripts')
     <script>
         function confirmarEliminacion(idUsuario) {
             Swal.fire({
