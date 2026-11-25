@@ -1,6 +1,6 @@
 <?php
 
-use App\Controllers\Admin\AdminDashboardController;
+use App\Controllers\Admin\InstitucionController;
 use App\Controllers\Admin\MenuController;
 use App\Controllers\Admin\PermisoController;
 use App\Controllers\Admin\RolController;
@@ -91,6 +91,12 @@ Route::group(['middleware' => [$authMiddleware, $permissionMiddleware]], functio
         Route::post(':id/delete', [UserController::class, 'delete']);
         Route::post(':id/restore', [UserController::class, 'restore']);
         Route::post(':id/destroy', [UserController::class, 'destroy']);
+    });
+
+    // --- Módulo Datos de la Institución ---
+    Route::group(['prefix' => 'institucion'], function () {
+        Route::get('/', [InstitucionController::class, 'index']);
+        Route::post('update', [InstitucionController::class, 'update']);
     });
 });
 

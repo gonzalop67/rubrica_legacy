@@ -87,15 +87,21 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const html = await resp.text();
+
+            // 1. Limpiar por completo la instancia anterior de Nestable en el contenedor padre
+            const $nestable = $('#nestable');
+            $nestable.off();
+            $nestable.removeData('nestable');
+
+            // 2. Inyectar el nuevo HTML del árbol
             nestableContainer.innerHTML = html;
 
-            // Inicializar jQuery Nestable si el plugin está cargado y hay una lista .dd-list
+            // 3. Inicializar Nestable desde cero sobre el nuevo DOM
             if (typeof $ !== 'undefined' && $.fn.nestable && nestableContainer.querySelector('.dd-list')) {
-                $('#nestable').nestable('destroy');
-                $('#nestable').nestable({
+                $nestable.nestable({
                     maxDepth: 3
-                }).off('change').on('change', async function () {
-                    const ordenSerializado = JSON.stringify($('#nestable').nestable('serialize'));
+                }).on('change', async function () {
+                    const ordenSerializado = JSON.stringify($nestable.nestable('serialize'));
                     await guardarOrdenNestable(ordenSerializado);
                 });
             }
@@ -188,7 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 3. CARGAR DATOS AL HACER CLIC EN UN NODO DEL ÁRBOL
-        window.obtenerDatos = async function (id) {
+    window.obtenerDatos = async function (id) {
         limpiarErrores();
         try {
             const resp = await fetch(`${urlBaseSegura}/menus/${id}/edit`);
