@@ -2,6 +2,7 @@
 
 use App\Controllers\Admin\InstitucionController;
 use App\Controllers\Admin\MenuController;
+use App\Controllers\Admin\OfertasEducativasController;
 use App\Controllers\Admin\PermisoController;
 use App\Controllers\Admin\RolController;
 use App\Controllers\Admin\TareaController;
@@ -97,6 +98,19 @@ Route::group(['middleware' => [$authMiddleware, $permissionMiddleware]], functio
     Route::group(['prefix' => 'institucion'], function () {
         Route::get('/', [InstitucionController::class, 'index']);
         Route::post('update', [InstitucionController::class, 'update']);
+    });
+
+    // --- Módulo Ofertas Educativas ---
+    Route::group(['prefix' => 'ofertas_educativas'], function () {
+        Route::get('/', [OfertasEducativasController::class, 'index']);
+        Route::get('create', [OfertasEducativasController::class, 'create']);
+        Route::get('wastebasket', [OfertasEducativasController::class, 'wastebasket']);
+        Route::post('/', [OfertasEducativasController::class, 'store']);
+        Route::get(':id/edit', [OfertasEducativasController::class, 'edit']);
+        Route::post(':id/update', [OfertasEducativasController::class, 'update']);
+        Route::post(':id/delete', [OfertasEducativasController::class, 'delete']);
+        Route::post(':id/restore', [OfertasEducativasController::class, 'restore']);
+        Route::post(':id/destroy', [OfertasEducativasController::class, 'destroy']);
     });
 });
 

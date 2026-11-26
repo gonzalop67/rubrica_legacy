@@ -5,7 +5,7 @@ namespace App\Controllers;
 use App\Controllers\Controller;
 
 use App\Models\Perfil;
-use App\Models\Institucion;
+use App\Models\Admin\Institucion;
 use App\Models\Admin\Usuario;
 use App\Models\Admin\UsuariosRoles;
 

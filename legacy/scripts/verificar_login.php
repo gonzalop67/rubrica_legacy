@@ -19,11 +19,13 @@ $id_modalidad = $periodo_lectivo->id_modalidad;
 $_SESSION['usuario_logueado'] = false;
 if ($usuarios->existeUsuario($login, $clave)) {
 	$id_usuario = $usuarios->obtenerIdUsuario($login, $clave);
-	//$nombreModalidad = $modalidades->getModalidadByIdPeriodoLectivo($id_periodo_lectivo);
+	$datosUsuario = $usuarios->obtenerUsuario($id_usuario); // Ajusta al método de tu class.usuarios.php
+	
 	$_SESSION['usuario_logueado'] = true;
 	$_SESSION['id_periodo_lectivo'] = $id_periodo_lectivo;
 	$_SESSION['id_modalidad'] = $id_modalidad;
 	$_SESSION['id_usuario'] = $id_usuario;
+	$_SESSION['us_avatar'] = !empty($datosUsuario->us_foto) ? $datosUsuario->us_foto : 'default.png';
 
 	$_SESSION['cambio_paralelo'] = 0;
 

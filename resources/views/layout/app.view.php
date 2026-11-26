@@ -1,7 +1,18 @@
 @php
-    $assetBase = rtrim(str_replace(['\\', '/public'], ['/', ''], dirname($_SERVER['SCRIPT_NAME'])), '/');
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    $scriptDir = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
+    $assetBase = preg_replace('#/(public|admin|usuarios|vistas).*$#', '', $scriptDir);
+    $assetBase = rtrim($assetBase, '/');
+
     $avatar = !empty($_SESSION['us_avatar']) ? $_SESSION['us_avatar'] : 'default.png';
-    $userImage = $assetBase . '/public/uploads/' . $avatar;
+    $userImage = $assetBase . '/public/uploads/' . ltrim($avatar, '/');
+
+    /* echo '<pre style="background:#222; color:#0f0; padding:10px; position:relative; z-index:9999;">';
+    print_r($_SESSION);
+    echo '</pre>'; */
 @endphp
 
 <!DOCTYPE html>
@@ -119,20 +130,25 @@
                                 <ul class="treeview-menu">
                                     @foreach ($menu['submenus'] as $sub)
                                         @php
-                                            $urlSub = str_starts_with($sub['mnu_enlace'], '/')
-                                                ? $assetBase . $sub['mnu_enlace']
+                                            $enlaceSub = (string) ($sub['mnu_enlace'] ?? '');
+                                            $urlSub = str_starts_with($enlaceSub, '/')
+                                                ? $assetBase . $enlaceSub
                                                 : $assetBase .
                                                     "/admin.php?id_usuario={$idUsuarioEnc}&id_perfil={$idPerfil}&id_menu={$sub['id_menu']}&nivel={$sub['mnu_nivel']}";
                                         @endphp
-                                        <li><a href="{{ $urlSub }}"><i class="fa fa-circle-o"></i>
-                                                {{ $sub['mnu_texto'] }}</a></li>
+                                        <li>
+                                            <a href="{{ $urlSub }}">
+                                                <i class="fa fa-circle-o"></i> {{ $sub['mnu_texto'] }}
+                                            </a>
+                                        </li>
                                     @endforeach
                                 </ul>
                             </li>
                         @else
                             @php
-                                $urlMenu = str_starts_with($menu['mnu_enlace'], '/')
-                                    ? $assetBase . $menu['mnu_enlace']
+                                $enlaceMenu = (string) ($menu['mnu_enlace'] ?? '');
+                                $urlMenu = str_starts_with($enlaceMenu, '/')
+                                    ? $assetBase . $enlaceMenu
                                     : $assetBase .
                                         "/admin.php?id_usuario={$idUsuarioEnc}&id_perfil={$idPerfil}&id_menu={$menu['id_menu']}&nivel={$menu['mnu_nivel']}";
                             @endphp
