@@ -65,7 +65,7 @@
                                     <td class="text-center" style="vertical-align: middle;">
                                         <div class="btn-group">
                                             <a href="{{ $assetBase }}/ofertas_educativas/{{ $oferta['id'] }}/edit"
-                                                class="btn btn-warning btn-sm" title="Editar oferta">
+                                                class="btn btn-warning btn-sm" title="Editar oferta educativa">
                                                 <i class="fa fa-pencil"></i>
                                             </a>
                                             <button type="button" class="btn btn-danger btn-sm"

@@ -32,7 +32,7 @@ class OfertasEducativasController extends Controller
             $term = "%{$search}%";
 
             // 3. Pasamos los valores al arreglo que procesará el prepare del ORM
-            $this->ofertaEducativaModel->values = [$term, $term, $term];
+            $this->ofertaEducativaModel->values = [$term, $term];
         }
 
         // El ORM inyectará de forma automática el ORDER BY y resolverá la paginación
@@ -91,7 +91,7 @@ class OfertasEducativasController extends Controller
 
             return json_encode([
                 'ok' => true,
-                'mensaje' => 'Rol procesado con éxito.'
+                'mensaje' => 'Oferta Educativa procesada con éxito.'
             ]);
         } catch (\Throwable $e) {
             // Revertir transacción SQL ante cualquier fallo
@@ -152,7 +152,7 @@ class OfertasEducativasController extends Controller
 
             return json_encode([
                 'ok' => true,
-                'mensaje' => 'Permiso procesado con éxito.'
+                'mensaje' => 'Oferta Educativa procesada con éxito.'
             ]);
         } catch (\Throwable $e) {
             // Deshace cualquier cambio si algo falla en el proceso
@@ -246,9 +246,9 @@ class OfertasEducativasController extends Controller
 
         try {
             // 1. Buscamos a la oferta educativa en la base de datos antes de borrarlo
-            $perfil = $this->ofertaEducativaModel->withTrashed()->find($id);
+            $oferta_educativa = $this->ofertaEducativaModel->withTrashed()->find($id);
 
-            if (!$perfil) {
+            if (!$oferta_educativa) {
                 echo json_encode([
                     'success' => false,
                     'titulo'  => 'Atención',

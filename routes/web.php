@@ -2,6 +2,7 @@
 
 use App\Controllers\Admin\InstitucionController;
 use App\Controllers\Admin\MenuController;
+use App\Controllers\Admin\NivelEducacionController;
 use App\Controllers\Admin\OfertasEducativasController;
 use App\Controllers\Admin\PermisoController;
 use App\Controllers\Admin\RolController;
@@ -111,6 +112,19 @@ Route::group(['middleware' => [$authMiddleware, $permissionMiddleware]], functio
         Route::post(':id/delete', [OfertasEducativasController::class, 'delete']);
         Route::post(':id/restore', [OfertasEducativasController::class, 'restore']);
         Route::post(':id/destroy', [OfertasEducativasController::class, 'destroy']);
+    });
+
+    // --- Módulo Niveles de Educación ---
+    Route::group(['prefix' => 'niveles_educacion'], function () {
+        Route::get('/', [NivelEducacionController::class, 'index']);
+        Route::get('create', [NivelEducacionController::class, 'create']);
+        Route::get('wastebasket', [NivelEducacionController::class, 'wastebasket']);
+        Route::post('/', [NivelEducacionController::class, 'store']);
+        Route::get(':id/edit', [NivelEducacionController::class, 'edit']);
+        Route::post(':id/update', [NivelEducacionController::class, 'update']);
+        Route::post(':id/delete', [NivelEducacionController::class, 'delete']);
+        Route::post(':id/restore', [NivelEducacionController::class, 'restore']);
+        Route::post(':id/destroy', [NivelEducacionController::class, 'destroy']);
     });
 });
 
